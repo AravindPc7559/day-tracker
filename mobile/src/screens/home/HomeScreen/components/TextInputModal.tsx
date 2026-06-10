@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   Animated,
+  Easing,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, gradients, spacing, typography, borderRadius } from '@/theme';
@@ -20,10 +21,48 @@ interface TextInputModalProps {
 }
 
 const MAX = 500;
+const SHEET_HEIGHT = 340;
 
 export const TextInputModal: React.FC<TextInputModalProps> = ({ visible, onSubmit, onDismiss }) => {
   const [text, setText] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const sheetY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
   const sendScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (visible) {
+      setMounted(true);
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+        Animated.spring(sheetY, {
+          toValue: 0,
+          tension: 70,
+          friction: 12,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else if (mounted) {
+      Animated.parallel([
+        Animated.timing(overlayOpacity, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+        Animated.timing(sheetY, {
+          toValue: SHEET_HEIGHT,
+          duration: 220,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start(() => setMounted(false));
+    }
+  }, [visible]);
 
   const handleSubmit = () => {
     const trimmed = text.trim();
@@ -38,7 +77,7 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({ visible, onSubmi
   };
 
   const onPressIn = () =>
-    Animated.spring(sendScale, { toValue: 0.9, useNativeDriver: true, speed: 80, bounciness: 0 }).start();
+    Animated.spring(sendScale, { toValue: 0.92, useNativeDriver: true, speed: 80, bounciness: 0 }).start();
   const onPressOut = () =>
     Animated.spring(sendScale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 8 }).start();
 
@@ -46,12 +85,14 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({ visible, onSubmi
   const remaining = MAX - text.length;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleDismiss}>
+    <Modal visible={mounted} transparent animationType="none" onRequestClose={handleDismiss}>
       <TouchableWithoutFeedback onPress={handleDismiss}>
-        <View style={styles.overlay}>
+        <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]}>
           <TouchableWithoutFeedback>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'position' : 'height'}>
-              <View style={styles.sheet}>
+              <Animated.View
+                style={[styles.sheet, { transform: [{ translateY: sheetY }] }]}
+              >
                 <View style={styles.handle} />
 
                 <View style={styles.labelRow}>
@@ -98,10 +139,10 @@ export const TextInputModal: React.FC<TextInputModalProps> = ({ visible, onSubmi
                     </LinearGradient>
                   </Animated.View>
                 </TouchableWithoutFeedback>
-              </View>
+              </Animated.View>
             </KeyboardAvoidingView>
           </TouchableWithoutFeedback>
-        </View>
+        </Animated.View>
       </TouchableWithoutFeedback>
     </Modal>
   );
