@@ -21,12 +21,20 @@ const FOOD_LABELS: Record<string, string> = {
   snack_food: 'Snack',
 };
 
-const EXPENSE_KEYS = ['breakfast_expense', 'lunch_expense', 'dinner_expense', 'snack_expense'];
+const EXPENSE_KEYS = [
+  'breakfast_expense', 'lunch_expense', 'dinner_expense', 'snack_expense',
+  'entertainment_expense', 'transport_expense', 'shopping_expense', 'health_expense', 'other_expense',
+];
 const EXPENSE_LABELS: Record<string, string> = {
   breakfast_expense: 'Breakfast',
   lunch_expense: 'Lunch',
   dinner_expense: 'Dinner',
   snack_expense: 'Snack',
+  entertainment_expense: 'Entertainment',
+  transport_expense: 'Transport',
+  shopping_expense: 'Shopping',
+  health_expense: 'Health',
+  other_expense: 'Other',
 };
 
 const OTHER_KEYS: Record<string, { label: string; icon: string; format: (v: string | number) => string }> = {

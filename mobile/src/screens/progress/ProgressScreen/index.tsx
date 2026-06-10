@@ -9,9 +9,8 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useGetDailyLogs, useGetWeeklyExpenses } from '@/features/logs/logs.api';
+import { useGetDailyLogs } from '@/features/logs/logs.api';
 import { DailySummaryCard } from './components/DailySummaryCard';
-import { WeeklyChart } from './components/WeeklyChart';
 import { EntryList } from './components/EntryList';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 
@@ -35,9 +34,6 @@ const ProgressScreen: React.FC = () => {
     refetch: refetchDaily,
   } = useGetDailyLogs(selectedDate);
 
-  const { data: weeklyData, isLoading: weeklyLoading, refetch: refetchWeekly } =
-    useGetWeeklyExpenses();
-
   const goToPrevDay = () => {
     const d = new Date(selectedDate + 'T00:00:00');
     d.setDate(d.getDate() - 1);
@@ -55,7 +51,7 @@ const ProgressScreen: React.FC = () => {
   const isToday = selectedDate === toDateStr(new Date());
 
   const handleRefresh = async () => {
-    await Promise.all([refetchDaily(), refetchWeekly()]);
+    await refetchDaily();
   };
 
   return (
@@ -70,7 +66,7 @@ const ProgressScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={dailyLoading || weeklyLoading}
+            refreshing={dailyLoading}
             onRefresh={handleRefresh}
             tintColor={colors.primary[400]}
           />
@@ -100,10 +96,6 @@ const ProgressScreen: React.FC = () => {
         ) : (
           <DailySummaryCard summary={dailyData?.summary ?? {}} />
         )}
-
-        {weeklyLoading ? null : weeklyData ? (
-          <WeeklyChart data={weeklyData} />
-        ) : null}
 
         {!dailyLoading && dailyData?.entries ? (
           <EntryList entries={dailyData.entries} />

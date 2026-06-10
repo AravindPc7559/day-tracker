@@ -3,16 +3,17 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, StyleSheet } from 'react-native';
 import HomeScreen from '@/screens/home/HomeScreen';
 import ProgressScreen from '@/screens/progress/ProgressScreen';
+import AnalyticsScreen from '@/screens/analytics/AnalyticsScreen';
 import { colors, typography } from '@/theme';
 import type { AppTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
-const tabIcon = (name: string, focused: boolean) => (
-  <Text style={[styles.icon, focused && styles.iconFocused]}>
-    {name === 'Home' ? '🎙️' : '📊'}
-  </Text>
-);
+const ICONS: Record<string, string> = {
+  Home: '🎙️',
+  Progress: '📅',
+  Analytics: '📈',
+};
 
 export const AppNavigator: React.FC = () => (
   <Tab.Navigator
@@ -22,11 +23,16 @@ export const AppNavigator: React.FC = () => (
       tabBarActiveTintColor: colors.primary[400],
       tabBarInactiveTintColor: colors.neutral[400],
       tabBarLabelStyle: styles.tabLabel,
-      tabBarIcon: ({ focused }) => tabIcon(route.name, focused),
+      tabBarIcon: ({ focused }) => (
+        <Text style={[styles.icon, focused && styles.iconFocused]}>
+          {ICONS[route.name]}
+        </Text>
+      ),
     })}
   >
     <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Record' }} />
     <Tab.Screen name="Progress" component={ProgressScreen} options={{ tabBarLabel: 'Progress' }} />
+    <Tab.Screen name="Analytics" component={AnalyticsScreen} options={{ tabBarLabel: 'Analytics' }} />
   </Tab.Navigator>
 );
 
@@ -43,11 +49,6 @@ const styles = StyleSheet.create({
     fontSize: typography.size.xs,
     fontWeight: typography.weight.medium,
   },
-  icon: {
-    fontSize: 22,
-    opacity: 0.5,
-  },
-  iconFocused: {
-    opacity: 1,
-  },
+  icon: { fontSize: 22, opacity: 0.5 },
+  iconFocused: { opacity: 1 },
 });

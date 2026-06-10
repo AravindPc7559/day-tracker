@@ -2,27 +2,28 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { BarChartCustom } from '@/components/ui/BarChartCustom';
 import { colors, spacing, typography, borderRadius } from '@/theme';
-import type { WeeklyExpense } from '@/features/logs/logs.types';
+import type { PeriodEntry } from '@/features/logs/logs.types';
 
-interface WeeklyChartProps {
-  data: WeeklyExpense[];
+interface ExpenseTrendChartProps {
+  data: PeriodEntry[];
 }
 
-const shortDay = (dateStr: string) =>
-  new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
+export const ExpenseTrendChart: React.FC<ExpenseTrendChartProps> = ({ data }) => {
+  const chartData = data.map((d) => ({
+    label: d.label,
+    value: (d.summary.total_expense as number) ?? 0,
+  }));
 
-export const WeeklyChart: React.FC<WeeklyChartProps> = ({ data }) => {
-  const chartData = data.map((d) => ({ label: shortDay(d.date), value: d.total_expense }));
   const hasData = chartData.some((d) => d.value > 0);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Weekly Expenses</Text>
+      <Text style={styles.title}>💸  Expense Trend</Text>
       {hasData ? (
         <BarChartCustom data={chartData} color={colors.primary[600]} prefix="₹" height={140} />
       ) : (
         <View style={styles.empty}>
-          <Text style={styles.emptyText}>No expenses recorded this week</Text>
+          <Text style={styles.emptyText}>No expenses for this period</Text>
         </View>
       )}
     </View>
@@ -42,7 +43,7 @@ const styles = StyleSheet.create({
     fontSize: typography.size.md,
     fontWeight: typography.weight.semibold,
     color: colors.neutral[0],
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   empty: { height: 100, justifyContent: 'center', alignItems: 'center' },
   emptyText: { fontSize: typography.size.sm, color: colors.neutral[400] },

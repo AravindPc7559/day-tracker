@@ -10,5 +10,8 @@ export const ENDPOINTS = {
   LOGS: {
     DAILY: (date: string) => `/logs/${date}`,
     WEEKLY: '/logs/weekly',
+    WEEKLY_SUMMARY: '/logs/weekly-summary',
+    MONTHLY_SUMMARY: '/logs/monthly-summary',
+    YEARLY_SUMMARY: '/logs/yearly-summary',
   },
 } as const;

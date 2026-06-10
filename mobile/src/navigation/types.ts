@@ -9,6 +9,7 @@ export type AuthStackParamList = {
 export type AppTabParamList = {
   Home: undefined;
   Progress: undefined;
+  Analytics: undefined;
 };
 
 export type AuthScreenProps<T extends keyof AuthStackParamList> = NativeStackScreenProps<
