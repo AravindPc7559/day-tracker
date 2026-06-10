@@ -31,6 +31,7 @@ const ProgressScreen: React.FC = () => {
   const {
     data: dailyData,
     isLoading: dailyLoading,
+    isFetching: dailyFetching,
     refetch: refetchDaily,
   } = useGetDailyLogs(selectedDate);
 
@@ -66,7 +67,7 @@ const ProgressScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={dailyLoading}
+            refreshing={dailyFetching && !dailyLoading}
             onRefresh={handleRefresh}
             tintColor={colors.primary[400]}
           />
