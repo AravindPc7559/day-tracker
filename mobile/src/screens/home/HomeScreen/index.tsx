@@ -3,11 +3,11 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   TouchableOpacity,
   Animated,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { MicButton } from '@/components/ui/MicButton';
 import { TextInputModal } from './components/TextInputModal';
@@ -145,11 +145,7 @@ const HomeScreen: React.FC = () => {
     processAudioMutation.isPending ? colors.neutral[300] :
     colors.neutral[300];
 
-  const initials = userProfile?.displayName
-    ? userProfile.displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-    : '?';
-
-  const today = new Date().toLocaleDateString('en-US', {
+const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
   });
 
@@ -172,14 +168,9 @@ const HomeScreen: React.FC = () => {
             </Text>
           </Text>
         </View>
-        <View style={styles.headerRight}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
-          </View>
-          <TouchableOpacity onPress={logout}>
-            <Text style={styles.signOut}>Sign out</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={logout} style={styles.signOutBtn} activeOpacity={0.7}>
+          <Text style={styles.signOut}>Sign out</Text>
+        </TouchableOpacity>
       </Animated.View>
 
       <Animated.View
@@ -272,9 +263,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
   },
   dateLabel: {
@@ -293,28 +284,17 @@ const styles = StyleSheet.create({
   greetingName: {
     color: colors.primary[400],
   },
-  headerRight: {
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primary[50],
-    borderWidth: 1.5,
-    borderColor: colors.primary[700],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: typography.size.sm,
-    fontWeight: typography.weight.bold,
-    color: colors.primary[400],
+  signOutBtn: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.neutral[600],
   },
   signOut: {
     fontSize: typography.size.xs,
     color: colors.neutral[400],
+    fontWeight: typography.weight.medium,
   },
   micArea: {
     flex: 1,

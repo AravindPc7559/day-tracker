@@ -3,12 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGetWeeklySummary, useGetMonthlySummary, useGetYearlySummary } from '@/features/logs/logs.api';
 import { StatsRow } from './components/StatsRow';
 import { ExpenseTrendChart } from './components/ExpenseTrendChart';
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.neutral[900] },
   header: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.md,
     gap: spacing.md,
   },
