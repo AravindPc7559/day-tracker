@@ -6,21 +6,25 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Animated,
-  Dimensions,
+  Alert,
 } from 'react-native';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { MicButton } from '@/components/ui/MicButton';
 import { TextInputModal } from './components/TextInputModal';
-import { useVoiceInput } from './hooks/useVoiceInput';
+import { ConfirmationModal } from './components/ConfirmationModal';
+import { useAudioRecording } from './hooks/useAudioRecording';
+import { useQueryClient } from '@tanstack/react-query';
+import { useProcessAudio, useProcessText, useConfirmSave } from '@/features/audio/audio.api';
+import { LOGS_QUERY_KEYS } from '@/features/logs/logs.api';
 import { colors, spacing, typography, borderRadius } from '@/theme';
-import type { AppScreenProps } from '@/navigation/types';
+import type { ProcessAudioResponse } from '@/features/audio/audio.types';
 
-const { width: W } = Dimensions.get('window');
-type Props = AppScreenProps<'Home'>;
-
-const HomeScreen: React.FC<Props> = ({ navigation }) => {
+const HomeScreen: React.FC = () => {
   const { userProfile, logout } = useAuthStore();
+  const queryClient = useQueryClient();
   const [showTextInput, setShowTextInput] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [processedData, setProcessedData] = useState<ProcessAudioResponse | null>(null);
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-16)).current;
@@ -42,33 +46,103 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     ]).start();
   }, []);
 
-  const handleUserInput = useCallback(
-    (text: string) => {
-      setShowTextInput(false);
-      navigation.navigate('InputResult', { input: text });
-    },
-    [navigation]
-  );
+  const { recordingState, duration, errorMessage, startRecording, stopRecording, reset } =
+    useAudioRecording();
 
-  const { voiceState, partialText, errorMessage, startListening, stopListening } = useVoiceInput({
-    onResult: handleUserInput,
-  });
+  const processAudioMutation = useProcessAudio();
+  const processTextMutation = useProcessText();
+  const confirmSaveMutation = useConfirmSave();
 
-  const handleMicPress = () => {
-    if (voiceState === 'listening') stopListening();
-    else if (voiceState === 'idle' || voiceState === 'error') startListening();
-  };
+  const micState =
+    recordingState === 'recording' ? 'listening' :
+    recordingState === 'processing' || processAudioMutation.isPending || processTextMutation.isPending ? 'processing' :
+    recordingState === 'error' ? 'error' :
+    'idle';
+
+  const handleMicPress = useCallback(async () => {
+    if (recordingState === 'idle' || recordingState === 'error') {
+      reset();
+      await startRecording();
+    } else if (recordingState === 'recording') {
+      const uri = await stopRecording();
+      if (!uri) return;
+
+      const formData = new FormData();
+      formData.append('audio', {
+        uri,
+        type: 'audio/m4a',
+        name: 'recording.m4a',
+      } as unknown as Blob);
+
+      try {
+        const result = await processAudioMutation.mutateAsync(formData);
+        setProcessedData(result);
+        setShowConfirmation(true);
+      } catch (err: unknown) {
+        const axiosErr = err as { response?: { data?: { message?: string }; status?: number } };
+        const msg =
+          axiosErr?.response?.data?.message ??
+          (err instanceof Error ? err.message : 'Unknown error');
+        Alert.alert('Error', msg);
+        reset();
+      }
+    }
+  }, [recordingState, startRecording, stopRecording, reset, processAudioMutation]);
+
+  const handleTextSubmit = useCallback(async (text: string) => {
+    setShowTextInput(false);
+    try {
+      const result = await processTextMutation.mutateAsync(text);
+      setProcessedData(result);
+      setShowConfirmation(true);
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string }; status?: number } };
+      const msg =
+        axiosErr?.response?.data?.message ??
+        (err instanceof Error ? err.message : 'Unknown error');
+      Alert.alert('Error', msg);
+    }
+  }, [processTextMutation]);
+
+  const handleConfirm = useCallback(async () => {
+    if (!processedData) return;
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    try {
+      await confirmSaveMutation.mutateAsync({
+        transcription: processedData.transcription,
+        categories: processedData.categories,
+        date: today,
+      });
+      await queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.daily(today) });
+      await queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weekly });
+      setShowConfirmation(false);
+      setProcessedData(null);
+      reset();
+    } catch {
+      Alert.alert('Error', 'Failed to save. Please try again.');
+    }
+  }, [processedData, confirmSaveMutation, reset, queryClient]);
+
+  const handleDiscard = useCallback(() => {
+    setShowConfirmation(false);
+    setProcessedData(null);
+    reset();
+  }, [reset]);
 
   const instructionLabel =
-    voiceState === 'listening' ? 'Listening… tap to stop' :
-    voiceState === 'processing' ? 'Processing…' :
-    voiceState === 'error' ? (errorMessage ?? 'Something went wrong') :
-    'Tap the mic to speak';
+    recordingState === 'recording'
+      ? `Recording… ${duration}s — tap to stop`
+      : processAudioMutation.isPending || processTextMutation.isPending
+      ? 'Processing…'
+      : recordingState === 'error'
+      ? (errorMessage ?? 'Something went wrong')
+      : 'Tap the mic to record';
 
   const instructionColor =
-    voiceState === 'error' ? colors.error :
-    voiceState === 'listening' ? colors.primary[400] :
-    voiceState === 'processing' ? colors.neutral[300] :
+    recordingState === 'error' ? colors.error :
+    recordingState === 'recording' ? colors.primary[400] :
+    processAudioMutation.isPending ? colors.neutral[300] :
     colors.neutral[300];
 
   const initials = userProfile?.displayName
@@ -79,13 +153,13 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     weekday: 'long', month: 'long', day: 'numeric',
   });
 
+  const isProcessing = processAudioMutation.isPending || processTextMutation.isPending;
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Background glow blobs */}
       <View style={[styles.blob, styles.blob1]} />
       <View style={[styles.blob, styles.blob2]} />
 
-      {/* Header */}
       <Animated.View
         style={[styles.header, { opacity: headerOpacity, transform: [{ translateY: headerY }] }]}
       >
@@ -108,7 +182,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         </View>
       </Animated.View>
 
-      {/* Mic area */}
       <Animated.View
         style={[styles.micArea, { opacity: micOpacity, transform: [{ translateY: micY }] }]}
       >
@@ -116,18 +189,21 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
           {instructionLabel}
         </Text>
 
-        <MicButton state={voiceState} onPress={handleMicPress} />
+        <MicButton
+          state={micState}
+          onPress={handleMicPress}
+        />
 
-        {partialText ? (
-          <View style={styles.partialBubble}>
-            <Text style={styles.partialText}>{partialText}</Text>
+        {recordingState === 'recording' && (
+          <View style={styles.durationBubble}>
+            <View style={styles.recordingDot} />
+            <Text style={styles.durationText}>{formatDuration(duration)}</Text>
           </View>
-        ) : null}
+        )}
       </Animated.View>
 
-      {/* Footer */}
       <Animated.View style={[styles.footer, { opacity: footerOpacity }]}>
-        {voiceState === 'idle' || voiceState === 'error' ? (
+        {(recordingState === 'idle' || recordingState === 'error') && !isProcessing ? (
           <TouchableOpacity
             style={styles.typeButton}
             onPress={() => setShowTextInput(true)}
@@ -140,8 +216,16 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
       <TextInputModal
         visible={showTextInput}
-        onSubmit={handleUserInput}
+        onSubmit={handleTextSubmit}
         onDismiss={() => setShowTextInput(false)}
+      />
+
+      <ConfirmationModal
+        visible={showConfirmation}
+        data={processedData}
+        isSaving={confirmSaveMutation.isPending}
+        onConfirm={handleConfirm}
+        onDiscard={handleDiscard}
       />
     </SafeAreaView>
   );
@@ -152,6 +236,12 @@ const timeOfDay = () => {
   if (h < 12) return 'morning';
   if (h < 17) return 'afternoon';
   return 'evening';
+};
+
+const formatDuration = (seconds: number) => {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = (seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
 };
 
 export default HomeScreen;
@@ -237,21 +327,30 @@ const styles = StyleSheet.create({
     fontWeight: typography.weight.medium,
     textAlign: 'center',
     letterSpacing: 0.1,
+    paddingHorizontal: spacing.xl,
   },
-  partialBubble: {
+  durationBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
     backgroundColor: colors.neutral[700],
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.full,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    maxWidth: W - spacing.xxxl,
     borderWidth: 1,
     borderColor: colors.primary[700],
   },
-  partialText: {
-    fontSize: typography.size.md,
+  recordingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.error,
+  },
+  durationText: {
+    fontSize: typography.size.sm,
     color: colors.neutral[100],
-    textAlign: 'center',
-    fontStyle: 'italic',
+    fontWeight: typography.weight.medium,
+    fontVariant: ['tabular-nums'],
   },
   footer: {
     paddingBottom: spacing.xxl,
