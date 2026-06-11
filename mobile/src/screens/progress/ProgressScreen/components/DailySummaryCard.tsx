@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderColor: colors.neutral[700],
@@ -217,15 +217,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: typography.size.sm,
     color: colors.neutral[300],
-    flexShrink: 1,
+    paddingTop: 1,
   },
   rowRight: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
     gap: spacing.xs,
-    flexShrink: 1,
   },
   rowValue: {
+    flexShrink: 1,
     fontSize: typography.size.sm,
     color: colors.neutral[0],
     fontWeight: typography.weight.semibold,
@@ -236,12 +238,14 @@ const styles = StyleSheet.create({
     height: 28,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   editBtnText: {
     fontSize: 13,
   },
   editBtnPlaceholder: {
     width: 28,
+    flexShrink: 0,
   },
   emptyContainer: {
     backgroundColor: colors.neutral[800],
