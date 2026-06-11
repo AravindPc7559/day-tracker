@@ -172,11 +172,11 @@ export default LoginScreen;
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.neutral[900] },
   bg: { flex: 1, backgroundColor: colors.neutral[900] },
-  topSection: { paddingBottom: spacing.xxl },
+  topSection: { paddingBottom: spacing.sm },
   brandArea: {
     alignItems: 'center',
     paddingTop: spacing.xxxl + spacing.xl,
-    paddingBottom: spacing.xl,
+    paddingBottom: spacing.md,
   },
   appName: {
     fontSize: typography.size.xxl,
