@@ -4,6 +4,7 @@ import { Text, StyleSheet } from 'react-native';
 import HomeScreen from '@/screens/home/HomeScreen';
 import ProgressScreen from '@/screens/progress/ProgressScreen';
 import AnalyticsScreen from '@/screens/analytics/AnalyticsScreen';
+import SettingsScreen from '@/screens/settings/SettingsScreen';
 import { colors, typography } from '@/theme';
 import type { AppTabParamList } from './types';
 
@@ -13,6 +14,7 @@ const ICONS: Record<string, string> = {
   Home: '🎙️',
   Progress: '📅',
   Analytics: '📈',
+  Settings: '⚙️',
 };
 
 export const AppNavigator: React.FC = () => (
@@ -33,6 +35,7 @@ export const AppNavigator: React.FC = () => (
     <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Record' }} />
     <Tab.Screen name="Progress" component={ProgressScreen} options={{ tabBarLabel: 'Progress' }} />
     <Tab.Screen name="Analytics" component={AnalyticsScreen} options={{ tabBarLabel: 'Analytics' }} />
+    <Tab.Screen name="Settings" component={SettingsScreen} options={{ tabBarLabel: 'Settings' }} />
   </Tab.Navigator>
 );
 

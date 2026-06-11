@@ -18,6 +18,7 @@ import { registerWithEmail } from '@/services/firebase/auth.service';
 import { useCreateProfile } from '@/features/auth/auth.api';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { BlurtLogo } from '@/components/ui/BlurtLogo';
 import { colors, gradients, spacing, typography, borderRadius, shadows } from '@/theme';
 import type { RegisterPayload } from '@/features/auth/auth.types';
 import type { AuthScreenProps } from '@/navigation/types';
@@ -25,7 +26,7 @@ import type { AuthScreenProps } from '@/navigation/types';
 const registerSchema = z
   .object({
     displayName: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Enter a valid email address'),
+    email: z.string().email({ message: 'Enter a valid email address' }),
     password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string(),
   })
@@ -78,9 +79,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backIcon}>←  Back</Text>
           </TouchableOpacity>
-          <View style={styles.logoRing}>
-            <Text style={styles.logoLetter}>D</Text>
-          </View>
+          <BlurtLogo size={60} />
           <Text style={styles.headerTitle}>Create account</Text>
           <Text style={styles.headerSubtitle}>Start your journey today</Text>
         </LinearGradient>
@@ -183,7 +182,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 export default RegisterScreen;
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  flex: { flex: 1, backgroundColor: colors.neutral[900] },
   bg: { flex: 1, backgroundColor: colors.neutral[900] },
   topSection: {
     paddingTop: spacing.xxl + spacing.lg,
@@ -195,22 +194,6 @@ const styles = StyleSheet.create({
     fontSize: typography.size.sm,
     color: 'rgba(255,255,255,0.6)',
     fontWeight: typography.weight.medium,
-  },
-  logoRing: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: 'rgba(59,130,246,0.2)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(59,130,246,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  logoLetter: {
-    fontSize: 26,
-    fontWeight: typography.weight.extrabold,
-    color: colors.neutral[0],
   },
   headerTitle: {
     fontSize: typography.size.xxl,

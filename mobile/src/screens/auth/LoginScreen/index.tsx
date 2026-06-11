@@ -16,12 +16,13 @@ import { z } from 'zod';
 import { Button, Input } from '@/components/ui';
 import { signInWithEmail } from '@/services/firebase/auth.service';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
+import { BlurtLogo } from '@/components/ui/BlurtLogo';
 import { colors, gradients, spacing, typography, borderRadius, shadows } from '@/theme';
 import type { LoginPayload } from '@/features/auth/auth.types';
 import type { AuthScreenProps } from '@/navigation/types';
 
 const loginSchema = z.object({
-  email: z.string().email('Enter a valid email address'),
+  email: z.string().email({ message: 'Enter a valid email address' }),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -63,11 +64,9 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         {/* Top gradient header */}
         <LinearGradient colors={gradients.brandSubtle} style={styles.topSection}>
           <Animated.View style={[styles.brandArea, { opacity: logoAnim }]}>
-            <View style={styles.logoRing}>
-              <Text style={styles.logoLetter}>D</Text>
-            </View>
-            <Text style={styles.appName}>Day Tracker</Text>
-            <Text style={styles.tagline}>Track · Reflect · Grow</Text>
+            <BlurtLogo size={80} />
+            <Text style={styles.appName}>Blurt</Text>
+            <Text style={styles.tagline}>Speak your day. Track everything.</Text>
           </Animated.View>
         </LinearGradient>
 
@@ -171,29 +170,13 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 export default LoginScreen;
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  flex: { flex: 1, backgroundColor: colors.neutral[900] },
   bg: { flex: 1, backgroundColor: colors.neutral[900] },
   topSection: { paddingBottom: spacing.xxl },
   brandArea: {
     alignItems: 'center',
     paddingTop: spacing.xxxl + spacing.xl,
     paddingBottom: spacing.xl,
-  },
-  logoRing: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
-    backgroundColor: 'rgba(59,130,246,0.2)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(59,130,246,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  logoLetter: {
-    fontSize: 34,
-    fontWeight: typography.weight.extrabold,
-    color: colors.neutral[0],
   },
   appName: {
     fontSize: typography.size.xxl,

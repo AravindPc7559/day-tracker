@@ -23,7 +23,7 @@ import { colors, spacing, typography, borderRadius } from '@/theme';
 import type { ProcessAudioResponse } from '@/features/audio/audio.types';
 
 const HomeScreen: React.FC = () => {
-  const { userProfile, logout } = useAuthStore();
+  const { userProfile } = useAuthStore();
   const queryClient = useQueryClient();
 
   const [showTextInput, setShowTextInput] = useState(false);
@@ -187,9 +187,6 @@ const HomeScreen: React.FC = () => {
             </Text>
           </Text>
         </View>
-        <TouchableOpacity onPress={logout} style={styles.signOutBtn} activeOpacity={0.7}>
-          <Text style={styles.signOut}>Sign out</Text>
-        </TouchableOpacity>
       </Animated.View>
 
       <StreakCard streak={streakData} />
@@ -291,18 +288,6 @@ const styles = StyleSheet.create({
   },
   greetingName: {
     color: colors.primary[400],
-  },
-  signOutBtn: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.neutral[600],
-  },
-  signOut: {
-    fontSize: typography.size.xs,
-    color: colors.neutral[400],
-    fontWeight: typography.weight.medium,
   },
   micArea: {
     flex: 1,
