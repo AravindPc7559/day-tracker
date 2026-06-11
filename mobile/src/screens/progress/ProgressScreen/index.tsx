@@ -126,7 +126,7 @@ const ProgressScreen: React.FC = () => {
             <ActivityIndicator color={colors.primary[400]} />
           </View>
         ) : (
-          <DailySummaryCard summary={dailyData?.summary ?? {}} onEdit={handleEdit} />
+          <DailySummaryCard summary={dailyData?.summary ?? {}} isToday={isToday} onEdit={handleEdit} />
         )}
 
         {!dailyLoading && dailyData?.entries ? (

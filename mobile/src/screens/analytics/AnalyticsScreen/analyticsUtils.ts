@@ -3,8 +3,11 @@ import type { WeeklySummaryEntry, MonthlySummaryEntry, PeriodEntry, AnalyticsPer
 const shortDay = (dateStr: string) =>
   new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
 
-const shortMonth = (monthStr: string) =>
-  new Date(monthStr + '-01T00:00:00').toLocaleDateString('en-US', { month: 'short' }).slice(0, 3);
+const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const shortMonth = (monthStr: string) => {
+  const m = parseInt(monthStr.slice(5, 7), 10) - 1;
+  return SHORT_MONTHS[m] ?? monthStr.slice(5, 7);
+};
 
 // Merge N daily summaries into one aggregated summary
 const aggregateSummaries = (entries: WeeklySummaryEntry[]): DailySummary => {
