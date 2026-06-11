@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/features/auth/auth.store';
-import { MicButton } from '@/components/ui/MicButton';
 import { TextInputModal } from './components/TextInputModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { useAudioRecording } from './hooks/useAudioRecording';
@@ -18,15 +17,20 @@ import { useProcessAudio, useProcessText, useConfirmSave } from '@/features/audi
 import { LOGS_QUERY_KEYS } from '@/features/logs/logs.api';
 import { useGetStreak, STREAK_QUERY_KEY } from '@/features/streak/streak.api';
 import { StreakCard } from './components/StreakCard';
+import { RecordingFace } from '@/components/RecordingFace/RecordingFace';
+import type { FaceState } from '@/components/RecordingFace/RecordingFace';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 import type { ProcessAudioResponse } from '@/features/audio/audio.types';
 
 const HomeScreen: React.FC = () => {
   const { userProfile, logout } = useAuthStore();
   const queryClient = useQueryClient();
+
   const [showTextInput, setShowTextInput] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [processedData, setProcessedData] = useState<ProcessAudioResponse | null>(null);
+  const [showDone, setShowDone] = useState(false);
+  const [apiErrorMsg, setApiErrorMsg] = useState<string | null>(null);
 
   const headerOpacity = useRef(new Animated.Value(0)).current;
   const headerY = useRef(new Animated.Value(-16)).current;
@@ -50,21 +54,31 @@ const HomeScreen: React.FC = () => {
 
   const { data: streakData } = useGetStreak();
 
-  const { recordingState, duration, errorMessage, startRecording, stopRecording, reset } =
+  const { recordingState, volume, errorMessage, startRecording, stopRecording, cancelRecording, reset } =
     useAudioRecording();
 
   const processAudioMutation = useProcessAudio();
   const processTextMutation = useProcessText();
   const confirmSaveMutation = useConfirmSave();
 
-  const micState =
+  const isProcessing = processAudioMutation.isPending || processTextMutation.isPending;
+
+  const faceState: FaceState =
+    showConfirmation ? 'idle' :
+    showDone ? 'done' :
     recordingState === 'recording' ? 'listening' :
-    recordingState === 'processing' || processAudioMutation.isPending || processTextMutation.isPending ? 'processing' :
-    recordingState === 'error' ? 'error' :
+    (recordingState === 'processing' || isProcessing) ? 'thinking' :
+    (recordingState === 'error' || apiErrorMsg !== null) ? 'error' :
     'idle';
+
+  const faceErrorMsg =
+    apiErrorMsg ??
+    errorMessage ??
+    "Oops, didn't catch that. Try again?";
 
   const handleMicPress = useCallback(async () => {
     if (recordingState === 'idle' || recordingState === 'error') {
+      setApiErrorMsg(null);
       reset();
       await startRecording();
     } else if (recordingState === 'recording') {
@@ -80,30 +94,36 @@ const HomeScreen: React.FC = () => {
 
       try {
         const result = await processAudioMutation.mutateAsync(formData);
+        setShowDone(true);
+        await new Promise<void>((r) => setTimeout(r, 700));
+        setShowDone(false);
         setProcessedData(result);
         setShowConfirmation(true);
       } catch (err: unknown) {
-        const axiosErr = err as { response?: { data?: { message?: string }; status?: number } };
+        const axiosErr = err as { response?: { data?: { message?: string } } };
         const msg =
           axiosErr?.response?.data?.message ??
-          (err instanceof Error ? err.message : 'Unknown error');
-        Alert.alert('Error', msg);
-        reset();
+          (err instanceof Error ? err.message : 'Something went wrong');
+        setApiErrorMsg(msg);
       }
     }
   }, [recordingState, startRecording, stopRecording, reset, processAudioMutation]);
 
   const handleTextSubmit = useCallback(async (text: string) => {
     setShowTextInput(false);
+    setApiErrorMsg(null);
     try {
       const result = await processTextMutation.mutateAsync(text);
+      setShowDone(true);
+      await new Promise<void>((r) => setTimeout(r, 700));
+      setShowDone(false);
       setProcessedData(result);
       setShowConfirmation(true);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string }; status?: number } };
+      const axiosErr = err as { response?: { data?: { message?: string } } };
       const msg =
         axiosErr?.response?.data?.message ??
-        (err instanceof Error ? err.message : 'Unknown error');
+        (err instanceof Error ? err.message : 'Something went wrong');
       Alert.alert('Error', msg);
     }
   }, [processTextMutation]);
@@ -122,6 +142,7 @@ const HomeScreen: React.FC = () => {
       await queryClient.invalidateQueries({ queryKey: STREAK_QUERY_KEY });
       setShowConfirmation(false);
       setProcessedData(null);
+      setApiErrorMsg(null);
       reset();
     } catch {
       Alert.alert('Error', 'Failed to save. Please try again.');
@@ -131,29 +152,23 @@ const HomeScreen: React.FC = () => {
   const handleDiscard = useCallback(() => {
     setShowConfirmation(false);
     setProcessedData(null);
+    setApiErrorMsg(null);
     reset();
   }, [reset]);
 
-  const instructionLabel =
-    recordingState === 'recording'
-      ? `Recording… ${duration}s — tap to stop`
-      : processAudioMutation.isPending || processTextMutation.isPending
-      ? 'Processing…'
-      : recordingState === 'error'
-      ? (errorMessage ?? 'Something went wrong')
-      : 'Tap the mic to record';
+  const handleCancel = useCallback(async () => {
+    await cancelRecording();
+    setApiErrorMsg(null);
+  }, [cancelRecording]);
 
-  const instructionColor =
-    recordingState === 'error' ? colors.error :
-    recordingState === 'recording' ? colors.primary[400] :
-    processAudioMutation.isPending ? colors.neutral[300] :
-    colors.neutral[300];
+  const handleRetry = useCallback(() => {
+    setApiErrorMsg(null);
+    reset();
+  }, [reset]);
 
-const today = new Date().toLocaleDateString('en-US', {
+  const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric',
   });
-
-  const isProcessing = processAudioMutation.isPending || processTextMutation.isPending;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -182,25 +197,18 @@ const today = new Date().toLocaleDateString('en-US', {
       <Animated.View
         style={[styles.micArea, { opacity: micOpacity, transform: [{ translateY: micY }] }]}
       >
-        <Text style={[styles.instruction, { color: instructionColor }]}>
-          {instructionLabel}
-        </Text>
-
-        <MicButton
-          state={micState}
+        <RecordingFace
+          state={faceState}
+          volume={volume}
+          errorMessage={faceErrorMsg}
           onPress={handleMicPress}
+          onCancel={handleCancel}
+          onRetry={handleRetry}
         />
-
-        {recordingState === 'recording' && (
-          <View style={styles.durationBubble}>
-            <View style={styles.recordingDot} />
-            <Text style={styles.durationText}>{formatDuration(duration)}</Text>
-          </View>
-        )}
       </Animated.View>
 
       <Animated.View style={[styles.footer, { opacity: footerOpacity }]}>
-        {(recordingState === 'idle' || recordingState === 'error') && !isProcessing ? (
+        {faceState === 'idle' ? (
           <TouchableOpacity
             style={styles.typeButton}
             onPress={() => setShowTextInput(true)}
@@ -233,12 +241,6 @@ const timeOfDay = () => {
   if (h < 12) return 'morning';
   if (h < 17) return 'afternoon';
   return 'evening';
-};
-
-const formatDuration = (seconds: number) => {
-  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const s = (seconds % 60).toString().padStart(2, '0');
-  return `${m}:${s}`;
 };
 
 export default HomeScreen;
@@ -306,37 +308,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: spacing.lg,
-  },
-  instruction: {
-    fontSize: typography.size.md,
-    fontWeight: typography.weight.medium,
-    textAlign: 'center',
-    letterSpacing: 0.1,
-    paddingHorizontal: spacing.xl,
-  },
-  durationBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.neutral[700],
-    borderRadius: borderRadius.full,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.primary[700],
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.error,
-  },
-  durationText: {
-    fontSize: typography.size.sm,
-    color: colors.neutral[100],
-    fontWeight: typography.weight.medium,
-    fontVariant: ['tabular-nums'],
   },
   footer: {
     paddingBottom: spacing.xxl,

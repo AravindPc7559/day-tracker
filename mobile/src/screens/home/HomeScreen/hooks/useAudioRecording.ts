@@ -6,15 +6,20 @@ export type RecordingState = 'idle' | 'recording' | 'processing' | 'error';
 interface UseAudioRecordingReturn {
   recordingState: RecordingState;
   duration: number;
+  volume: number;
   errorMessage: string | null;
   startRecording: () => Promise<void>;
   stopRecording: () => Promise<string | null>;
+  cancelRecording: () => Promise<void>;
   reset: () => void;
 }
+
+const METERING_FLOOR_DB = -60;
 
 export const useAudioRecording = (): UseAudioRecordingReturn => {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -22,6 +27,7 @@ export const useAudioRecording = (): UseAudioRecordingReturn => {
   const startRecording = async () => {
     try {
       setErrorMessage(null);
+      setVolume(0);
 
       const { granted } = await Audio.requestPermissionsAsync();
       if (!granted) {
@@ -35,9 +41,16 @@ export const useAudioRecording = (): UseAudioRecordingReturn => {
         playsInSilentModeIOS: true,
       });
 
-      // Creates a brand-new native recorder instance every call
       const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
+        { ...Audio.RecordingOptionsPresets.HIGH_QUALITY, isMeteringEnabled: true },
+        (status) => {
+          if (status.metering !== undefined) {
+            // Normalize dBFS (floor at METERING_FLOOR_DB) → 0..1
+            const level = Math.max(0, Math.min(1, (status.metering - METERING_FLOOR_DB) / -METERING_FLOOR_DB));
+            setVolume(level);
+          }
+        },
+        100, // 10 fps
       );
 
       recordingRef.current = recording;
@@ -47,8 +60,7 @@ export const useAudioRecording = (): UseAudioRecordingReturn => {
       timerRef.current = setInterval(() => {
         setDuration((d) => d + 1);
       }, 1000);
-    } catch (e) {
-      console.log('[AudioRecording] start error:', e);
+    } catch {
       setErrorMessage('Failed to start recording');
       setRecordingState('error');
     }
@@ -61,6 +73,7 @@ export const useAudioRecording = (): UseAudioRecordingReturn => {
     }
 
     setRecordingState('processing');
+    setVolume(0);
 
     const recording = recordingRef.current;
     if (!recording) {
@@ -74,7 +87,6 @@ export const useAudioRecording = (): UseAudioRecordingReturn => {
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
 
       const uri = recording.getURI();
-      console.log('[AudioRecording] URI:', uri);
       recordingRef.current = null;
 
       if (!uri) {
@@ -84,8 +96,7 @@ export const useAudioRecording = (): UseAudioRecordingReturn => {
       }
 
       return uri;
-    } catch (e) {
-      console.log('[AudioRecording] stop error:', e);
+    } catch {
       recordingRef.current = null;
       setErrorMessage('Failed to stop recording');
       setRecordingState('error');
@@ -93,11 +104,35 @@ export const useAudioRecording = (): UseAudioRecordingReturn => {
     }
   };
 
-  const reset = () => {
+  const cancelRecording = async (): Promise<void> => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    const recording = recordingRef.current;
+    if (recording) {
+      try {
+        await recording.stopAndUnloadAsync();
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      } catch {
+        // ignore — we're discarding anyway
+      }
+      recordingRef.current = null;
+    }
+
     setRecordingState('idle');
     setDuration(0);
+    setVolume(0);
     setErrorMessage(null);
   };
 
-  return { recordingState, duration, errorMessage, startRecording, stopRecording, reset };
+  const reset = () => {
+    setRecordingState('idle');
+    setDuration(0);
+    setVolume(0);
+    setErrorMessage(null);
+  };
+
+  return { recordingState, duration, volume, errorMessage, startRecording, stopRecording, cancelRecording, reset };
 };
