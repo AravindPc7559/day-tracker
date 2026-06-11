@@ -16,6 +16,8 @@ import { useAudioRecording } from './hooks/useAudioRecording';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProcessAudio, useProcessText, useConfirmSave } from '@/features/audio/audio.api';
 import { LOGS_QUERY_KEYS } from '@/features/logs/logs.api';
+import { useGetStreak, STREAK_QUERY_KEY } from '@/features/streak/streak.api';
+import { StreakCard } from './components/StreakCard';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 import type { ProcessAudioResponse } from '@/features/audio/audio.types';
 
@@ -45,6 +47,8 @@ const HomeScreen: React.FC = () => {
       Animated.timing(footerOpacity, { toValue: 1, duration: 400, useNativeDriver: true }),
     ]).start();
   }, []);
+
+  const { data: streakData } = useGetStreak();
 
   const { recordingState, duration, errorMessage, startRecording, stopRecording, reset } =
     useAudioRecording();
@@ -104,25 +108,25 @@ const HomeScreen: React.FC = () => {
     }
   }, [processTextMutation]);
 
-  const handleConfirm = useCallback(async () => {
-    if (!processedData) return;
+  const handleConfirm = useCallback(async (updated: ProcessAudioResponse) => {
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     try {
       await confirmSaveMutation.mutateAsync({
-        transcription: processedData.transcription,
-        categories: processedData.categories,
+        transcription: updated.transcription,
+        categories: updated.categories,
         date: today,
       });
       await queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.daily(today) });
       await queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weekly });
+      await queryClient.invalidateQueries({ queryKey: STREAK_QUERY_KEY });
       setShowConfirmation(false);
       setProcessedData(null);
       reset();
     } catch {
       Alert.alert('Error', 'Failed to save. Please try again.');
     }
-  }, [processedData, confirmSaveMutation, reset, queryClient]);
+  }, [confirmSaveMutation, reset, queryClient]);
 
   const handleDiscard = useCallback(() => {
     setShowConfirmation(false);
@@ -172,6 +176,8 @@ const today = new Date().toLocaleDateString('en-US', {
           <Text style={styles.signOut}>Sign out</Text>
         </TouchableOpacity>
       </Animated.View>
+
+      <StreakCard streak={streakData} />
 
       <Animated.View
         style={[styles.micArea, { opacity: micOpacity, transform: [{ translateY: micY }] }]}

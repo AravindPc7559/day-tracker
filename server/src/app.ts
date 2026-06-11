@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import authRoutes from './modules/auth/auth.routes';
 import audioRoutes from './modules/audio/audio.routes';
 import logsRoutes from './modules/logs/logs.routes';
+import streakRoutes from './modules/streak/streak.routes';
 import { errorMiddleware } from './middleware/error.middleware';
 
 const app = express();
@@ -20,6 +21,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/audio', audioRoutes);
 app.use('/api/logs', logsRoutes);
+app.use('/api/streak', streakRoutes);
 
 app.use(errorMiddleware);
 

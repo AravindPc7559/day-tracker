@@ -15,6 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Input } from '@/components/ui';
 import { signInWithEmail } from '@/services/firebase/auth.service';
+import { useGoogleAuth } from '@/hooks/useGoogleAuth';
 import { colors, gradients, spacing, typography, borderRadius, shadows } from '@/theme';
 import type { LoginPayload } from '@/features/auth/auth.types';
 import type { AuthScreenProps } from '@/navigation/types';
@@ -27,6 +28,7 @@ const loginSchema = z.object({
 type Props = AuthScreenProps<'Login'>;
 
 const LoginScreen: React.FC<Props> = ({ navigation }) => {
+  const google = useGoogleAuth();
   const logoAnim = useRef(new Animated.Value(0)).current;
   const cardAnim = useRef(new Animated.Value(60)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
@@ -117,9 +119,9 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                 )}
               />
 
-              {errors.root ? (
+              {errors.root || google.error ? (
                 <View style={styles.errorBanner}>
-                  <Text style={styles.errorText}>{errors.root.message}</Text>
+                  <Text style={styles.errorText}>{errors.root?.message ?? google.error}</Text>
                 </View>
               ) : null}
 
@@ -129,6 +131,28 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                 isLoading={isSubmitting}
                 style={styles.submitButton}
               />
+
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <TouchableOpacity
+                style={styles.googleButton}
+                onPress={google.signIn}
+                disabled={google.isLoading}
+                activeOpacity={0.8}
+              >
+                {google.isLoading ? (
+                  <Text style={styles.googleLabel}>Signing in…</Text>
+                ) : (
+                  <>
+                    <Text style={styles.googleIcon}>G</Text>
+                    <Text style={styles.googleLabel}>Continue with Google</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
 
             <View style={styles.footer}>
@@ -221,6 +245,46 @@ const styles = StyleSheet.create({
     color: '#FCA5A5',
   },
   submitButton: { marginTop: spacing.md },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.neutral[700],
+  },
+  dividerText: {
+    fontSize: typography.size.xs,
+    color: colors.neutral[400],
+    fontWeight: typography.weight.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    height: 52,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: colors.neutral[600],
+    backgroundColor: colors.neutral[800],
+    marginTop: spacing.md,
+  },
+  googleIcon: {
+    fontSize: typography.size.lg,
+    fontWeight: typography.weight.extrabold,
+    color: '#4285F4',
+  },
+  googleLabel: {
+    fontSize: typography.size.md,
+    fontWeight: typography.weight.semibold,
+    color: colors.neutral[100],
+  },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',

@@ -1,16 +1,24 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 import type { DailySummary } from '@/features/logs/logs.types';
 
 interface DailySummaryCardProps {
   summary: DailySummary;
+  onEdit?: (key: string, rawValue: string | number) => void;
+}
+
+interface SummaryRow {
+  key: string | null;
+  label: string;
+  value: string;
+  rawValue: string | number;
 }
 
 interface SummaryGroup {
   title: string;
   icon: string;
-  rows: { label: string; value: string }[];
+  rows: SummaryRow[];
 }
 
 const FOOD_KEYS = ['breakfast_food', 'lunch_food', 'dinner_food', 'snack_food'];
@@ -46,19 +54,62 @@ const OTHER_KEYS: Record<string, { label: string; icon: string; format: (v: stri
   notes: { label: 'Notes', icon: '📝', format: (v) => String(v) },
 };
 
+export const NUMERIC_KEYS = new Set([
+  'breakfast_expense', 'lunch_expense', 'dinner_expense', 'snack_expense',
+  'entertainment_expense', 'transport_expense', 'shopping_expense', 'health_expense', 'other_expense',
+  'water_intake', 'sleep_hours', 'weight',
+]);
+
+export const CATEGORY_LABELS: Record<string, string> = {
+  breakfast_food: 'Breakfast',
+  lunch_food: 'Lunch',
+  dinner_food: 'Dinner',
+  snack_food: 'Snack',
+  breakfast_expense: 'Breakfast Cost',
+  lunch_expense: 'Lunch Cost',
+  dinner_expense: 'Dinner Cost',
+  snack_expense: 'Snack Cost',
+  entertainment_expense: 'Entertainment',
+  transport_expense: 'Transport',
+  shopping_expense: 'Shopping',
+  health_expense: 'Health',
+  other_expense: 'Other Expense',
+  water_intake: 'Water Intake',
+  exercise: 'Exercise',
+  mood: 'Mood',
+  sleep_hours: 'Sleep',
+  weight: 'Weight',
+  notes: 'Notes',
+};
+
 const buildGroups = (summary: DailySummary): SummaryGroup[] => {
   const groups: SummaryGroup[] = [];
 
-  const foodRows = FOOD_KEYS
+  const foodRows: SummaryRow[] = FOOD_KEYS
     .filter((k) => summary[k] !== undefined)
-    .map((k) => ({ label: FOOD_LABELS[k], value: String(summary[k]) }));
+    .map((k) => ({
+      key: k,
+      label: FOOD_LABELS[k],
+      value: String(summary[k]),
+      rawValue: summary[k] as string | number,
+    }));
   if (foodRows.length) groups.push({ title: 'Meals', icon: '🍽️', rows: foodRows });
 
-  const expenseRows = EXPENSE_KEYS
+  const expenseRows: SummaryRow[] = EXPENSE_KEYS
     .filter((k) => summary[k] !== undefined)
-    .map((k) => ({ label: EXPENSE_LABELS[k], value: `₹${summary[k]}` }));
+    .map((k) => ({
+      key: k,
+      label: EXPENSE_LABELS[k],
+      value: `₹${summary[k]}`,
+      rawValue: summary[k] as string | number,
+    }));
   if (summary.total_expense !== undefined) {
-    expenseRows.push({ label: 'Total Today', value: `₹${summary.total_expense}` });
+    expenseRows.push({
+      key: null,
+      label: 'Total Today',
+      value: `₹${summary.total_expense}`,
+      rawValue: summary.total_expense,
+    });
   }
   if (expenseRows.length) groups.push({ title: 'Expenses', icon: '💸', rows: expenseRows });
 
@@ -67,7 +118,12 @@ const buildGroups = (summary: DailySummary): SummaryGroup[] => {
       groups.push({
         title: meta.label,
         icon: meta.icon,
-        rows: [{ label: meta.label, value: meta.format(summary[key] as string | number) }],
+        rows: [{
+          key,
+          label: meta.label,
+          value: meta.format(summary[key] as string | number),
+          rawValue: summary[key] as string | number,
+        }],
       });
     }
   }
@@ -75,7 +131,7 @@ const buildGroups = (summary: DailySummary): SummaryGroup[] => {
   return groups;
 };
 
-export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({ summary }) => {
+export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({ summary, onEdit }) => {
   const groups = buildGroups(summary);
 
   if (groups.length === 0) {
@@ -98,7 +154,20 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({ summary }) =
           {group.rows.map((row, ri) => (
             <View key={ri} style={styles.row}>
               <Text style={styles.rowLabel}>{row.label}</Text>
-              <Text style={styles.rowValue}>{row.value}</Text>
+              <View style={styles.rowRight}>
+                <Text style={styles.rowValue}>{row.value}</Text>
+                {row.key !== null && onEdit ? (
+                  <TouchableOpacity
+                    onPress={() => onEdit(row.key!, row.rawValue)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.editBtn}
+                  >
+                    <Text style={styles.editBtnText}>✏️</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.editBtnPlaceholder} />
+                )}
+              </View>
             </View>
           ))}
         </View>
@@ -138,7 +207,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
     borderColor: colors.neutral[700],
@@ -150,13 +219,29 @@ const styles = StyleSheet.create({
     color: colors.neutral[300],
     flexShrink: 1,
   },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    flexShrink: 1,
+  },
   rowValue: {
-    flex: 1,
     fontSize: typography.size.sm,
     color: colors.neutral[0],
     fontWeight: typography.weight.semibold,
     textAlign: 'right',
-    flexShrink: 1,
+  },
+  editBtn: {
+    width: 28,
+    height: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editBtnText: {
+    fontSize: 13,
+  },
+  editBtnPlaceholder: {
+    width: 28,
   },
   emptyContainer: {
     backgroundColor: colors.neutral[800],

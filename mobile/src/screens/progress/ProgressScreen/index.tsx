@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useGetDailyLogs } from '@/features/logs/logs.api';
-import { DailySummaryCard } from './components/DailySummaryCard';
+import { useGetDailyLogs, useUpdateCategoryField } from '@/features/logs/logs.api';
+import { DailySummaryCard, NUMERIC_KEYS, CATEGORY_LABELS } from './components/DailySummaryCard';
 import { EntryList } from './components/EntryList';
+import { EditFieldModal } from './components/EditFieldModal';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 
 const toDateStr = (d: Date) => {
@@ -25,8 +27,16 @@ const formatDisplayDate = (dateStr: string) => {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 };
 
+interface EditingField {
+  key: string;
+  label: string;
+  rawValue: string | number;
+  isNumeric: boolean;
+}
+
 const ProgressScreen: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()));
+  const [editingField, setEditingField] = useState<EditingField | null>(null);
 
   const {
     data: dailyData,
@@ -34,6 +44,8 @@ const ProgressScreen: React.FC = () => {
     isFetching: dailyFetching,
     refetch: refetchDaily,
   } = useGetDailyLogs(selectedDate);
+
+  const updateFieldMutation = useUpdateCategoryField(selectedDate);
 
   const goToPrevDay = () => {
     const d = new Date(selectedDate + 'T00:00:00');
@@ -53,6 +65,25 @@ const ProgressScreen: React.FC = () => {
 
   const handleRefresh = async () => {
     await refetchDaily();
+  };
+
+  const handleEdit = (key: string, rawValue: string | number) => {
+    setEditingField({
+      key,
+      label: CATEGORY_LABELS[key] ?? key,
+      rawValue,
+      isNumeric: NUMERIC_KEYS.has(key),
+    });
+  };
+
+  const handleSave = async (value: string | number) => {
+    if (!editingField) return;
+    try {
+      await updateFieldMutation.mutateAsync({ category: editingField.key, value });
+      setEditingField(null);
+    } catch {
+      Alert.alert('Error', 'Failed to update. Please try again.');
+    }
   };
 
   return (
@@ -95,13 +126,23 @@ const ProgressScreen: React.FC = () => {
             <ActivityIndicator color={colors.primary[400]} />
           </View>
         ) : (
-          <DailySummaryCard summary={dailyData?.summary ?? {}} />
+          <DailySummaryCard summary={dailyData?.summary ?? {}} onEdit={handleEdit} />
         )}
 
         {!dailyLoading && dailyData?.entries ? (
           <EntryList entries={dailyData.entries} />
         ) : null}
       </ScrollView>
+
+      <EditFieldModal
+        visible={editingField !== null}
+        label={editingField?.label ?? ''}
+        currentValue={String(editingField?.rawValue ?? '')}
+        isNumeric={editingField?.isNumeric ?? false}
+        isSaving={updateFieldMutation.isPending}
+        onSave={handleSave}
+        onDismiss={() => setEditingField(null)}
+      />
     </SafeAreaView>
   );
 };
