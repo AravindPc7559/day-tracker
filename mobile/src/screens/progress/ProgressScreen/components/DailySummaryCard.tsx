@@ -155,6 +155,43 @@ const MealRow: React.FC<MealRowProps> = ({ icon, label, foodKey, value, isLast, 
   );
 };
 
+// ─── Notes card (full-width text area display) ────────────────────────────────
+
+interface NotesCardProps {
+  value: string;
+  rowKey: string;
+  onEdit?: (key: string, rawValue: string | number) => void;
+}
+
+const NotesCard: React.FC<NotesCardProps> = ({ value, rowKey, onEdit }) => {
+  const items = value.split('\n').map((s) => s.trim()).filter(Boolean);
+  return (
+    <View style={styles.group}>
+      <View style={styles.groupHeader}>
+        <Text style={styles.groupIcon}>📝</Text>
+        <Text style={styles.groupTitle}>Notes</Text>
+        {onEdit && (
+          <TouchableOpacity
+            onPress={() => onEdit(rowKey, value)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.editBtn}
+          >
+            <Text style={styles.editBtnText}>✏️</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      <View style={styles.notesBody}>
+        {items.map((item, i) => (
+          <View key={i} style={styles.notesItem}>
+            <Text style={styles.notesBullet}>•</Text>
+            <Text style={styles.notesText}>{item}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
 // ─── Generic summary row (expenses / other) ────────────────────────────────────
 
 interface SummaryRowProps {
@@ -276,25 +313,38 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
       )}
 
       {/* ── Other metrics ── */}
-      {otherGroups.map((group, gi) => (
-        <View key={gi} style={styles.group}>
-          <View style={styles.groupHeader}>
-            <Text style={styles.groupIcon}>{group.icon}</Text>
-            <Text style={styles.groupTitle}>{group.title}</Text>
-          </View>
-          {group.rows.map((row, ri) => (
-            <SummaryRow
-              key={ri}
-              label={row.label}
-              value={row.value}
+      {otherGroups.map((group, gi) => {
+        const row = group.rows[0];
+        if (row?.key === 'notes') {
+          return (
+            <NotesCard
+              key={gi}
+              value={String(row.rawValue)}
               rowKey={row.key}
-              rawValue={row.rawValue}
-              isLast={ri === group.rows.length - 1}
               onEdit={onEdit}
             />
-          ))}
-        </View>
-      ))}
+          );
+        }
+        return (
+          <View key={gi} style={styles.group}>
+            <View style={styles.groupHeader}>
+              <Text style={styles.groupIcon}>{group.icon}</Text>
+              <Text style={styles.groupTitle}>{group.title}</Text>
+            </View>
+            {group.rows.map((r, ri) => (
+              <SummaryRow
+                key={ri}
+                label={r.label}
+                value={r.value}
+                rowKey={r.key}
+                rawValue={r.rawValue}
+                isLast={ri === group.rows.length - 1}
+                onEdit={onEdit}
+              />
+            ))}
+          </View>
+        );
+      })}
     </View>
   );
 };
@@ -456,6 +506,31 @@ const styles = StyleSheet.create({
   },
   editBtnText: { fontSize: 13 },
   editBtnPlaceholder: { width: 28, flexShrink: 0 },
+
+  // ── Notes card body ──
+  notesBody: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.lg,
+    gap: spacing.sm,
+  },
+  notesItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  notesBullet: {
+    fontSize: typography.size.sm,
+    color: colors.primary[400],
+    lineHeight: typography.size.sm * 1.65,
+    width: 10,
+  },
+  notesText: {
+    flex: 1,
+    fontSize: typography.size.sm,
+    color: colors.neutral[100],
+    lineHeight: typography.size.sm * 1.65,
+  },
 
   // ── Empty state ──
   emptyContainer: {

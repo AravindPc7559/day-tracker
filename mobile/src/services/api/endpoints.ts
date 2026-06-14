@@ -7,6 +7,9 @@ export const ENDPOINTS = {
     PROCESS_TEXT: '/audio/process-text',
     CONFIRM: '/audio/confirm',
   },
+  IMAGE: {
+    PROCESS: '/image/process',
+  },
   STREAK: '/streak',
   LOGS: {
     DAILY: (date: string) => `/logs/${date}`,

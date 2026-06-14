@@ -12,6 +12,7 @@ export interface ConfirmSaveInput {
   transcription: string;
   categories: Category[];
   date: string;
+  source?: 'audio' | 'text' | 'image';
 }
 
 export interface ConfirmSaveResponse {

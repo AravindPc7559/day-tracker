@@ -139,6 +139,7 @@ const ProgressScreen: React.FC = () => {
         label={editingField?.label ?? ''}
         currentValue={String(editingField?.rawValue ?? '')}
         isNumeric={editingField?.isNumeric ?? false}
+        isMultiline={editingField?.key === 'notes'}
         isSaving={updateFieldMutation.isPending}
         onSave={handleSave}
         onDismiss={() => setEditingField(null)}

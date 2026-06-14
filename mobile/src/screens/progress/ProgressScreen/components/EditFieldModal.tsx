@@ -17,6 +17,7 @@ interface EditFieldModalProps {
   label: string;
   currentValue: string;
   isNumeric: boolean;
+  isMultiline?: boolean;
   isSaving: boolean;
   onSave: (value: string | number) => void;
   onDismiss: () => void;
@@ -27,6 +28,7 @@ export const EditFieldModal: React.FC<EditFieldModalProps> = ({
   label,
   currentValue,
   isNumeric,
+  isMultiline = false,
   isSaving,
   onSave,
   onDismiss,
@@ -58,14 +60,16 @@ export const EditFieldModal: React.FC<EditFieldModalProps> = ({
           <Text style={styles.label}>Edit {label}</Text>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input, isMultiline && styles.inputMultiline]}
             value={value}
             onChangeText={setValue}
             keyboardType={isNumeric ? 'numeric' : 'default'}
             keyboardAppearance="dark"
             autoFocus
+            multiline={isMultiline}
+            textAlignVertical={isMultiline ? 'top' : 'center'}
             selectionColor={colors.primary[400]}
-            onSubmitEditing={handleSave}
+            onSubmitEditing={isMultiline ? undefined : handleSave}
           />
 
           <View style={styles.actions}>
@@ -118,6 +122,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     fontSize: typography.size.md,
     color: colors.neutral[0],
+  },
+  inputMultiline: {
+    minHeight: 120,
+    paddingTop: spacing.md,
   },
   actions: {
     flexDirection: 'row',

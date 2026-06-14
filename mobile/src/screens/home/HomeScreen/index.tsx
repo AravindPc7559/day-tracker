@@ -12,8 +12,10 @@ import { useAuthStore } from '@/features/auth/auth.store';
 import { TextInputModal } from './components/TextInputModal';
 import { ConfirmationModal } from './components/ConfirmationModal';
 import { useAudioRecording } from './hooks/useAudioRecording';
+import { useCameraCapture } from './hooks/useCameraCapture';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProcessAudio, useProcessText, useConfirmSave } from '@/features/audio/audio.api';
+import { useProcessImage } from '@/features/image/image.api';
 import { LOGS_QUERY_KEYS } from '@/features/logs/logs.api';
 import { useGetStreak, STREAK_QUERY_KEY } from '@/features/streak/streak.api';
 import { StreakCard } from './components/StreakCard';
@@ -29,6 +31,8 @@ const HomeScreen: React.FC = () => {
   const [showTextInput, setShowTextInput] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [processedData, setProcessedData] = useState<ProcessAudioResponse | null>(null);
+  const [currentSource, setCurrentSource] = useState<'audio' | 'text' | 'image'>('audio');
+  const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
   const [showDone, setShowDone] = useState(false);
   const [apiErrorMsg, setApiErrorMsg] = useState<string | null>(null);
 
@@ -57,11 +61,14 @@ const HomeScreen: React.FC = () => {
   const { recordingState, volume, errorMessage, startRecording, stopRecording, cancelRecording, reset } =
     useAudioRecording();
 
+  const { openCamera } = useCameraCapture();
+
   const processAudioMutation = useProcessAudio();
   const processTextMutation = useProcessText();
+  const processImageMutation = useProcessImage();
   const confirmSaveMutation = useConfirmSave();
 
-  const isProcessing = processAudioMutation.isPending || processTextMutation.isPending;
+  const isProcessing = processAudioMutation.isPending || processTextMutation.isPending || processImageMutation.isPending;
 
   const faceState: FaceState =
     showConfirmation ? 'idle' :
@@ -94,6 +101,7 @@ const HomeScreen: React.FC = () => {
 
       try {
         const result = await processAudioMutation.mutateAsync(formData);
+        setCurrentSource('audio');
         setShowDone(true);
         await new Promise<void>((r) => setTimeout(r, 700));
         setShowDone(false);
@@ -114,6 +122,7 @@ const HomeScreen: React.FC = () => {
     setApiErrorMsg(null);
     try {
       const result = await processTextMutation.mutateAsync(text);
+      setCurrentSource('text');
       setShowDone(true);
       await new Promise<void>((r) => setTimeout(r, 700));
       setShowDone(false);
@@ -128,6 +137,37 @@ const HomeScreen: React.FC = () => {
     }
   }, [processTextMutation]);
 
+  const handleCameraPress = useCallback(async () => {
+    const uri = await openCamera();
+    if (!uri) return;
+
+    setCapturedImageUri(uri);
+
+    const formData = new FormData();
+    formData.append('image', {
+      uri,
+      type: 'image/jpeg',
+      name: 'bill.jpg',
+    } as unknown as Blob);
+
+    try {
+      const result = await processImageMutation.mutateAsync(formData);
+      setCurrentSource('image');
+      setShowDone(true);
+      await new Promise<void>((r) => setTimeout(r, 700));
+      setShowDone(false);
+      setProcessedData(result);
+      setShowConfirmation(true);
+    } catch (err: unknown) {
+      setCapturedImageUri(null);
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const msg =
+        axiosErr?.response?.data?.message ??
+        (err instanceof Error ? err.message : 'Something went wrong');
+      Alert.alert('Error', msg);
+    }
+  }, [openCamera, processImageMutation]);
+
   const handleConfirm = useCallback(async (updated: ProcessAudioResponse) => {
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -136,23 +176,26 @@ const HomeScreen: React.FC = () => {
         transcription: updated.transcription,
         categories: updated.categories,
         date: today,
+        source: currentSource,
       });
-      await queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.daily(today) });
-      await queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weekly });
-      await queryClient.invalidateQueries({ queryKey: STREAK_QUERY_KEY });
       setShowConfirmation(false);
       setProcessedData(null);
       setApiErrorMsg(null);
+      setCapturedImageUri(null);
       reset();
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.daily(today) });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weekly });
+      queryClient.invalidateQueries({ queryKey: STREAK_QUERY_KEY });
     } catch {
       Alert.alert('Error', 'Failed to save. Please try again.');
     }
-  }, [confirmSaveMutation, reset, queryClient]);
+  }, [confirmSaveMutation, reset, queryClient, currentSource]);
 
   const handleDiscard = useCallback(() => {
     setShowConfirmation(false);
     setProcessedData(null);
     setApiErrorMsg(null);
+    setCapturedImageUri(null);
     reset();
   }, [reset]);
 
@@ -206,13 +249,22 @@ const HomeScreen: React.FC = () => {
 
       <Animated.View style={[styles.footer, { opacity: footerOpacity }]}>
         {faceState === 'idle' ? (
-          <TouchableOpacity
-            style={styles.typeButton}
-            onPress={() => setShowTextInput(true)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.typeButtonText}>⌨  Type instead</Text>
-          </TouchableOpacity>
+          <View style={styles.footerButtons}>
+            <TouchableOpacity
+              style={styles.typeButton}
+              onPress={handleCameraPress}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.typeButtonText}>📷  Scan bill</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.typeButton}
+              onPress={() => setShowTextInput(true)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.typeButtonText}>⌨  Type instead</Text>
+            </TouchableOpacity>
+          </View>
         ) : null}
       </Animated.View>
 
@@ -228,6 +280,7 @@ const HomeScreen: React.FC = () => {
         isSaving={confirmSaveMutation.isPending}
         onConfirm={handleConfirm}
         onDiscard={handleDiscard}
+        imageUri={currentSource === 'image' ? capturedImageUri ?? undefined : undefined}
       />
     </SafeAreaView>
   );
@@ -297,6 +350,10 @@ const styles = StyleSheet.create({
   footer: {
     paddingBottom: spacing.xxl,
     alignItems: 'center',
+  },
+  footerButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
   typeButton: {
     paddingVertical: spacing.sm,
