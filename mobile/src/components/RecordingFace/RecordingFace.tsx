@@ -12,6 +12,7 @@ interface RecordingFaceProps {
   state: FaceState;
   volume: number;
   errorMessage?: string | null;
+  source?: 'audio' | 'text' | 'image';
   onPress: () => void;
   onCancel: () => void;
   onRetry: () => void;
@@ -23,6 +24,7 @@ export const RecordingFace: React.FC<RecordingFaceProps> = ({
   state,
   volume,
   errorMessage,
+  source,
   onPress,
   onCancel,
   onRetry,
@@ -64,7 +66,7 @@ export const RecordingFace: React.FC<RecordingFaceProps> = ({
   const renderFace = () => {
     switch (displayed) {
       case 'listening': return <ListeningFace volume={volume} onStop={onPress} onCancel={onCancel} />;
-      case 'thinking':  return <ThinkingFace />;
+      case 'thinking':  return <ThinkingFace source={source} />;
       case 'done':      return <DoneFace />;
       case 'error':     return <ErrorFace message={errorMessage} onRetry={onRetry} />;
       default:          return null;

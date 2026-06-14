@@ -100,8 +100,8 @@ const HomeScreen: React.FC = () => {
       } as unknown as Blob);
 
       try {
-        const result = await processAudioMutation.mutateAsync(formData);
         setCurrentSource('audio');
+        const result = await processAudioMutation.mutateAsync(formData);
         setShowDone(true);
         await new Promise<void>((r) => setTimeout(r, 700));
         setShowDone(false);
@@ -121,8 +121,8 @@ const HomeScreen: React.FC = () => {
     setShowTextInput(false);
     setApiErrorMsg(null);
     try {
-      const result = await processTextMutation.mutateAsync(text);
       setCurrentSource('text');
+      const result = await processTextMutation.mutateAsync(text);
       setShowDone(true);
       await new Promise<void>((r) => setTimeout(r, 700));
       setShowDone(false);
@@ -151,8 +151,8 @@ const HomeScreen: React.FC = () => {
     } as unknown as Blob);
 
     try {
-      const result = await processImageMutation.mutateAsync(formData);
       setCurrentSource('image');
+      const result = await processImageMutation.mutateAsync(formData);
       setShowDone(true);
       await new Promise<void>((r) => setTimeout(r, 700));
       setShowDone(false);
@@ -244,6 +244,7 @@ const HomeScreen: React.FC = () => {
           state={faceState}
           volume={volume}
           errorMessage={faceErrorMsg}
+          source={currentSource}
           onPress={handleMicPress}
           onCancel={handleCancel}
           onRetry={handleRetry}

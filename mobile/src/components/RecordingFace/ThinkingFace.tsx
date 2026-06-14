@@ -3,7 +3,11 @@ import { View, Text, Animated, StyleSheet } from 'react-native';
 import { ProgressSteps } from './ProgressSteps';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 
-export const ThinkingFace: React.FC = () => {
+interface ThinkingFaceProps {
+  source?: 'audio' | 'text' | 'image';
+}
+
+export const ThinkingFace: React.FC<ThinkingFaceProps> = ({ source }) => {
   const tilt = useRef(new Animated.Value(0)).current;
   const progress = useRef(new Animated.Value(0)).current;
   const dots = [
@@ -79,7 +83,7 @@ export const ThinkingFace: React.FC = () => {
         />
       </View>
 
-      <ProgressSteps />
+      <ProgressSteps source={source} />
     </View>
   );
 };
