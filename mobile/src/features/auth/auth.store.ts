@@ -53,16 +53,17 @@ export const useAuthStore = create<AuthState>((set) => ({
             isInitialized: true,
           });
         } catch {
-          // Profile may not exist yet (new registration flow)
+          // Profile may not exist yet (new registration flow) — preserve any profile
+          // already set (e.g. by the registration screen) to avoid a race condition
           const token = await user.getIdToken().catch(() => null);
-          set({
+          set((state) => ({
             user,
             token,
-            userProfile: null,
+            userProfile: state.userProfile,
             isAuthenticated: true,
             isLoading: false,
             isInitialized: true,
-          });
+          }));
         }
       } else {
         await clearToken().catch(() => null);

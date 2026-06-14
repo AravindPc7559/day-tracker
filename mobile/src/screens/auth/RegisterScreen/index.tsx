@@ -14,7 +14,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Input } from '@/components/ui';
-import { registerWithEmail } from '@/services/firebase/auth.service';
+import { registerWithEmail, setFirebaseDisplayName } from '@/services/firebase/auth.service';
 import { useCreateProfile } from '@/features/auth/auth.api';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
@@ -60,7 +60,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   const onSubmit = async (values: RegisterPayload) => {
     try {
-      await registerWithEmail(values.email, values.password);
+      const firebaseUser = await registerWithEmail(values.email, values.password);
+      await setFirebaseDisplayName(firebaseUser, values.displayName);
       const profile = await createProfile({ displayName: values.displayName });
       setUserProfile(profile);
     } catch (err: unknown) {

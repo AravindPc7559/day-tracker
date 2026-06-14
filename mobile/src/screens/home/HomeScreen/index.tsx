@@ -185,6 +185,9 @@ const HomeScreen: React.FC = () => {
       reset();
       queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.daily(today) });
       queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weekly });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weeklySummary });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.monthlySummary });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.yearlySummary });
       queryClient.invalidateQueries({ queryKey: STREAK_QUERY_KEY });
     } catch {
       Alert.alert('Error', 'Failed to save. Please try again.');

@@ -49,10 +49,10 @@ export const CATEGORY_LABELS: Record<string, string> = {
 // ─── Meal categories — always rendered even when empty ─────────────────────────
 
 const MEAL_SLOTS = [
-  { key: 'breakfast_food', label: 'Breakfast', icon: '🍳' },
-  { key: 'lunch_food',     label: 'Lunch',     icon: '🍽️' },
-  { key: 'dinner_food',    label: 'Dinner',    icon: '🌙' },
-  { key: 'snack_food',     label: 'Snack',     icon: '🍎' },
+  { key: 'breakfast_food', expenseKey: 'breakfast_expense', label: 'Breakfast', icon: '🍳' },
+  { key: 'lunch_food',     expenseKey: 'lunch_expense',     label: 'Lunch',     icon: '🍽️' },
+  { key: 'dinner_food',    expenseKey: 'dinner_expense',    label: 'Dinner',    icon: '🌙' },
+  { key: 'snack_food',     expenseKey: 'snack_expense',     label: 'Snack',     icon: '🍎' },
 ] as const;
 
 // ─── Non-meal groups ───────────────────────────────────────────────────────────
@@ -82,13 +82,17 @@ interface MealRowProps {
   icon: string;
   label: string;
   foodKey: string;
+  expenseKey: string;
   value?: string | number;
+  expense?: number;
   isLast: boolean;
   onEdit?: (key: string, rawValue: string | number) => void;
 }
 
-const MealRow: React.FC<MealRowProps> = ({ icon, label, foodKey, value, isLast, onEdit }) => {
-  const hasData = value !== undefined && value !== '';
+const MealRow: React.FC<MealRowProps> = ({ icon, label, foodKey, expenseKey, value, expense, isLast, onEdit }) => {
+  const hasFood = value != null && value !== '';
+  const hasExpense = expense != null && typeof expense === 'number';
+  const hasData = hasFood || hasExpense;
   const [expanded, setExpanded] = useState(false);
   const chevron = useRef(new Animated.Value(0)).current;
 
@@ -105,7 +109,10 @@ const MealRow: React.FC<MealRowProps> = ({ icon, label, foodKey, value, isLast, 
   };
 
   const rotate = chevron.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] });
-  const preview = hasData ? String(value) : '';
+
+  const collapsedPreview = hasData
+    ? [hasFood ? String(value) : null, hasExpense ? `₹${expense}` : null].filter(Boolean).join('  ·  ')
+    : '';
 
   return (
     <View style={[styles.mealRow, isLast && styles.mealRowLast]}>
@@ -114,13 +121,13 @@ const MealRow: React.FC<MealRowProps> = ({ icon, label, foodKey, value, isLast, 
         <Text style={styles.mealIcon}>{icon}</Text>
         <Text style={styles.mealLabel}>{label}</Text>
 
-        {/* Collapsed preview — food name or "Not logged" */}
+        {/* Collapsed preview — food name + cost or "Not logged" */}
         {!expanded && (
           <Text
             style={[styles.mealPreview, !hasData && styles.mealPreviewEmpty]}
             numberOfLines={1}
           >
-            {hasData ? preview : 'Not logged'}
+            {hasData ? collapsedPreview : 'Not logged'}
           </Text>
         )}
 
@@ -131,16 +138,37 @@ const MealRow: React.FC<MealRowProps> = ({ icon, label, foodKey, value, isLast, 
       {expanded && (
         <View style={styles.mealBody}>
           {hasData ? (
-            <View style={styles.mealContent}>
-              <Text style={styles.mealValue}>{String(value)}</Text>
-              {onEdit && (
-                <TouchableOpacity
-                  style={styles.editBtn}
-                  onPress={() => onEdit(foodKey, value!)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Text style={styles.editBtnText}>✏️</Text>
-                </TouchableOpacity>
+            <View style={styles.mealExpandedContent}>
+              {hasFood && (
+                <View style={styles.mealContent}>
+                  <Text style={styles.mealValue}>{String(value)}</Text>
+                  {onEdit && (
+                    <TouchableOpacity
+                      style={styles.editBtn}
+                      onPress={() => onEdit(foodKey, value!)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.editBtnText}>✏️</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+              {hasExpense && (
+                <View style={styles.mealExpenseRow}>
+                  <Text style={styles.mealExpenseLabel}>Cost</Text>
+                  <View style={styles.mealExpenseRight}>
+                    <Text style={styles.mealExpenseValue}>₹{expense}</Text>
+                    {onEdit && (
+                      <TouchableOpacity
+                        style={styles.editBtn}
+                        onPress={() => onEdit(expenseKey, expense!)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Text style={styles.editBtnText}>✏️</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
               )}
             </View>
           ) : (
@@ -256,7 +284,7 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
   }
 
   const hasAnyData =
-    MEAL_SLOTS.some((s) => summary[s.key] !== undefined) ||
+    MEAL_SLOTS.some((s) => summary[s.key] != null || summary[s.expenseKey] != null) ||
     expenseRows.length > 0 ||
     otherGroups.length > 0;
 
@@ -283,7 +311,9 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
             icon={slot.icon}
             label={slot.label}
             foodKey={slot.key}
+            expenseKey={slot.expenseKey}
             value={summary[slot.key] as string | number | undefined}
+            expense={summary[slot.expenseKey] as number | undefined}
             isLast={i === MEAL_SLOTS.length - 1}
             onEdit={onEdit}
           />
@@ -438,6 +468,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     paddingTop: spacing.xs,
   },
+  mealExpandedContent: {
+    gap: spacing.sm,
+  },
   mealContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -449,6 +482,29 @@ const styles = StyleSheet.create({
     color: colors.neutral[0],
     fontWeight: typography.weight.medium,
     lineHeight: typography.size.md * 1.5,
+  },
+  mealExpenseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: spacing.xs,
+    borderTopWidth: 1,
+    borderColor: colors.neutral[700],
+  },
+  mealExpenseLabel: {
+    fontSize: typography.size.sm,
+    color: colors.neutral[400],
+    fontWeight: typography.weight.medium,
+  },
+  mealExpenseRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  mealExpenseValue: {
+    fontSize: typography.size.md,
+    color: colors.primary[300],
+    fontWeight: typography.weight.bold,
   },
   emptyMeal: {
     flexDirection: 'row',
