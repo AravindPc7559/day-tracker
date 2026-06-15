@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { BarChartCustom } from '@/components/ui/BarChartCustom';
 import { colors, spacing, typography, borderRadius } from '@/theme';
+import { sumExpenses } from '../analyticsUtils';
 import type { PeriodEntry } from '@/features/logs/logs.types';
 
 interface ExpenseTrendChartProps {
@@ -11,7 +12,7 @@ interface ExpenseTrendChartProps {
 export const ExpenseTrendChart: React.FC<ExpenseTrendChartProps> = ({ data }) => {
   const chartData = data.map((d) => ({
     label: d.label,
-    value: (d.summary.total_expense as number) ?? 0,
+    value: sumExpenses(d.summary),
   }));
 
   const hasData = chartData.some((d) => d.value > 0);

@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { Button, Input } from '@/components/ui';
 import { signInWithEmail } from '@/services/firebase/auth.service';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
-import { BlurtLogo } from '@/components/ui/BlurtLogo';
+import { AppLogo } from '@/components/ui/AppLogo';
 import { colors, gradients, spacing, typography, borderRadius, shadows } from '@/theme';
 import type { LoginPayload } from '@/features/auth/auth.types';
 import type { AuthScreenProps } from '@/navigation/types';
@@ -64,8 +64,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
         {/* Top gradient header */}
         <LinearGradient colors={gradients.brandSubtle} style={styles.topSection}>
           <Animated.View style={[styles.brandArea, { opacity: logoAnim }]}>
-            <BlurtLogo size={80} />
-            <Text style={styles.appName}>Blurt</Text>
+            <AppLogo size={80} />
+            <Text style={styles.appName}>CaptureDay</Text>
             <Text style={styles.tagline}>Speak your day. Track everything.</Text>
           </Animated.View>
         </LinearGradient>

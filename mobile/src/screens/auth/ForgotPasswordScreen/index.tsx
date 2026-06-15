@@ -14,7 +14,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Input } from '@/components/ui';
-import { BlurtLogo } from '@/components/ui/BlurtLogo';
+import { AppLogo } from '@/components/ui/AppLogo';
 import { sendPasswordResetEmail } from '@/services/firebase/auth.service';
 import { colors, gradients, spacing, typography, borderRadius, shadows } from '@/theme';
 import type { AuthScreenProps } from '@/navigation/types';
@@ -62,8 +62,8 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.bg}>
         <LinearGradient colors={gradients.brandSubtle} style={styles.topSection}>
           <Animated.View style={[styles.brandArea, { opacity: logoAnim }]}>
-            <BlurtLogo size={80} />
-            <Text style={styles.appName}>Blurt</Text>
+            <AppLogo size={80} />
+            <Text style={styles.appName}>CaptureDay</Text>
           </Animated.View>
         </LinearGradient>
 

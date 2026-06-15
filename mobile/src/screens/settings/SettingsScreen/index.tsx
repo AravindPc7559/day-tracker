@@ -185,7 +185,7 @@ const SettingsScreen: React.FC = () => {
           />
         </Section>
 
-        <Text style={styles.footer}>Blurt • Made with ❤️</Text>
+        <Text style={styles.footer}>CaptureDay • Made with ❤️</Text>
       </ScrollView>
     </SafeAreaView>
   );

@@ -7,9 +7,9 @@ import {
   type NotificationVariant,
 } from '@/constants/notifications';
 
-const MORNING_ID = 'blurt_daily_morning';
-const EVENING_ID = 'blurt_daily_evening';
-const PERMISSION_DENIED_KEY = 'blurt_notifications_permission_denied';
+const MORNING_ID = 'captureday_daily_morning';
+const EVENING_ID = 'captureday_daily_evening';
+const PERMISSION_DENIED_KEY = 'captureday_notifications_permission_denied';
 
 const MORNING_HOUR = 8;
 const EVENING_HOUR = 20;

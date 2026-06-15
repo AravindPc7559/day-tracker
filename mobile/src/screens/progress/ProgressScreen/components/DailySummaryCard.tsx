@@ -268,8 +268,12 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
   const expenseRows = EXPENSE_KEYS
     .filter((k) => summary[k] !== undefined)
     .map((k) => ({ key: k, label: EXPENSE_LABELS[k], value: `₹${summary[k]}`, rawValue: summary[k] as string | number }));
-  if (summary.total_expense !== undefined) {
-    expenseRows.push({ key: null, label: 'Total Today', value: `₹${summary.total_expense}`, rawValue: summary.total_expense });
+  const computedTotal = EXPENSE_KEYS.reduce((sum, k) => {
+    const v = summary[k];
+    return sum + (typeof v === 'number' ? v : 0);
+  }, 0);
+  if (computedTotal > 0) {
+    expenseRows.push({ key: null, label: 'Total Today', value: `₹${computedTotal}`, rawValue: computedTotal });
   }
 
   const otherGroups: Array<{ title: string; icon: string; rows: typeof expenseRows }> = [];

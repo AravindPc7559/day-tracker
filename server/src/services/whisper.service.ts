@@ -13,7 +13,7 @@ export const transcribeAudio = async (filePath: string, originalName = 'recordin
     type: mimeTypeFromExt(ext),
   });
 
-  const transcription = await openai.audio.transcriptions.create({
+  const transcription = await openai.audio.translations.create({
     file,
     model: 'whisper-1',
   });

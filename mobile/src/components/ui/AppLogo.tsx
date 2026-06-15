@@ -1,21 +1,21 @@
 import React from 'react';
 import Svg, { Rect, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-interface BlurtLogoProps {
+interface AppLogoProps {
   size?: number;
 }
 
-export const BlurtLogo: React.FC<BlurtLogoProps> = ({ size = 72 }) => (
+export const AppLogo: React.FC<AppLogoProps> = ({ size = 72 }) => (
   <Svg width={size} height={size} viewBox="0 0 100 100">
     <Defs>
-      <LinearGradient id="blurtGrad" x1="0" y1="0" x2="1" y2="1">
+      <LinearGradient id="appLogoGrad" x1="0" y1="0" x2="1" y2="1">
         <Stop offset="0" stopColor="#60A5FA" stopOpacity="1" />
         <Stop offset="1" stopColor="#1D4ED8" stopOpacity="1" />
       </LinearGradient>
     </Defs>
 
     {/* Background — rounded square matching app-icon shape */}
-    <Rect x="0" y="0" width="100" height="100" rx="22" fill="url(#blurtGrad)" />
+    <Rect x="0" y="0" width="100" height="100" rx="22" fill="url(#appLogoGrad)" />
 
     {/* Subtle top-light sheen */}
     <Rect x="0" y="0" width="100" height="52" rx="22" fill="rgba(255,255,255,0.09)" />

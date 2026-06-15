@@ -1,5 +1,16 @@
 import type { WeeklySummaryEntry, MonthlySummaryEntry, PeriodEntry, AnalyticsPeriod, DailySummary } from '@/features/logs/logs.types';
 
+const EXPENSE_KEYS = [
+  'breakfast_expense', 'lunch_expense', 'dinner_expense', 'snack_expense',
+  'entertainment_expense', 'transport_expense', 'shopping_expense', 'health_expense', 'other_expense',
+] as const;
+
+export const sumExpenses = (summary: DailySummary): number =>
+  EXPENSE_KEYS.reduce((sum, k) => {
+    const v = summary[k];
+    return sum + (typeof v === 'number' ? v : 0);
+  }, 0);
+
 const shortDay = (dateStr: string) =>
   new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
 
@@ -14,7 +25,7 @@ const aggregateSummaries = (entries: WeeklySummaryEntry[]): DailySummary => {
   const result: DailySummary = {};
   for (const entry of entries) {
     for (const [key, val] of Object.entries(entry.summary)) {
-      if (typeof val === 'number' && key !== 'updatedAt' as string) {
+      if (typeof val === 'number' && key !== ('updatedAt' as string) && key !== 'total_expense') {
         result[key] = ((result[key] as number) ?? 0) + val;
       }
     }
@@ -79,17 +90,17 @@ export const computeStats = (
       : { totalLabel: 'Year Total', avgLabel: 'Monthly Avg', loggedLabel: 'Months Active', count: 12 };
 
   if (period === 'week' && weeklyData) {
-    const total = weeklyData.reduce((s, d) => s + ((d.summary.total_expense as number) ?? 0), 0);
+    const total = weeklyData.reduce((s, d) => s + sumExpenses(d.summary), 0);
     const logged = weeklyData.filter((d) => Object.keys(d.summary).length > 0).length;
     return { total, avg: logged > 0 ? Math.round(total / logged) : 0, logged, ...base };
   }
   if (period === 'month' && monthlyData) {
-    const total = monthlyData.reduce((s, d) => s + ((d.summary.total_expense as number) ?? 0), 0);
+    const total = monthlyData.reduce((s, d) => s + sumExpenses(d.summary), 0);
     const logged = monthlyData.filter((d) => Object.keys(d.summary).length > 0).length;
     return { total, avg: logged > 0 ? Math.round(total / logged) : 0, logged, ...base };
   }
   if (period === 'year' && yearlyData) {
-    const total = yearlyData.reduce((s, d) => s + ((d.summary.total_expense as number) ?? 0), 0);
+    const total = yearlyData.reduce((s, d) => s + sumExpenses(d.summary), 0);
     const logged = yearlyData.filter((d) => Object.keys(d.summary).length > 0).length;
     return { total, avg: logged > 0 ? Math.round(total / logged) : 0, logged, ...base };
   }

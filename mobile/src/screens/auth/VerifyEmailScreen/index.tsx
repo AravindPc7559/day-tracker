@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { sendEmailVerification, reloadUser } from '@/services/firebase/auth.service';
-import { BlurtLogo } from '@/components/ui/BlurtLogo';
+import { AppLogo } from '@/components/ui/AppLogo';
 import { Button } from '@/components/ui';
 import { colors, gradients, spacing, typography, borderRadius, shadows } from '@/theme';
 
@@ -97,8 +97,8 @@ const VerifyEmailScreen: React.FC = () => {
       <View style={styles.bg}>
         <LinearGradient colors={gradients.brandSubtle} style={styles.topSection}>
           <Animated.View style={[styles.brandArea, { opacity: logoAnim }]}>
-            <BlurtLogo size={72} />
-            <Text style={styles.appName}>Blurt</Text>
+            <AppLogo size={72} />
+            <Text style={styles.appName}>CaptureDay</Text>
           </Animated.View>
         </LinearGradient>
 

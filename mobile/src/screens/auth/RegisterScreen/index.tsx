@@ -18,7 +18,7 @@ import { registerWithEmail, setFirebaseDisplayName, sendEmailVerification } from
 import { useCreateProfile } from '@/features/auth/auth.api';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
-import { BlurtLogo } from '@/components/ui/BlurtLogo';
+import { AppLogo } from '@/components/ui/AppLogo';
 import { colors, gradients, spacing, typography, borderRadius, shadows } from '@/theme';
 import type { RegisterPayload } from '@/features/auth/auth.types';
 import type { AuthScreenProps } from '@/navigation/types';
@@ -81,7 +81,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Text style={styles.backIcon}>←  Back</Text>
           </TouchableOpacity>
-          <BlurtLogo size={60} />
+          <AppLogo size={60} />
           <Text style={styles.headerTitle}>Create account</Text>
           <Text style={styles.headerSubtitle}>Start your journey today</Text>
         </LinearGradient>
