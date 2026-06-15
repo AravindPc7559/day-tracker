@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { authMiddleware } from '../../middleware/auth.middleware';
 import { processImageController } from './image.controller';
 
 const upload = multer({
@@ -16,8 +15,6 @@ const upload = multer({
 });
 
 const router = Router();
-
-router.use(authMiddleware);
 
 router.post('/process', upload.single('image'), processImageController);
 
