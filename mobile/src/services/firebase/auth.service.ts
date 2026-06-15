@@ -2,6 +2,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
+  sendEmailVerification as firebaseSendEmailVerification,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
   signOut as firebaseSignOut,
   onAuthStateChanged as firebaseOnAuthStateChanged,
   GoogleAuthProvider,
@@ -21,6 +23,14 @@ export const registerWithEmail = async (email: string, password: string): Promis
 export const setFirebaseDisplayName = async (user: User, displayName: string): Promise<void> => {
   await updateProfile(user, { displayName });
 };
+
+export const sendEmailVerification = (user: User) =>
+  firebaseSendEmailVerification(user);
+
+export const sendPasswordResetEmail = (email: string) =>
+  firebaseSendPasswordResetEmail(auth, email);
+
+export const reloadUser = (user: User) => user.reload();
 
 export const signInWithGoogle = (idToken: string) => {
   const credential = GoogleAuthProvider.credential(idToken);

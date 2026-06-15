@@ -41,6 +41,13 @@ export const createUserProfile = async (
   return profile;
 };
 
+export const savePushToken = async (uid: string, token: string): Promise<void> => {
+  await usersCollection().doc(uid).set(
+    { pushToken: token, updatedAt: Timestamp.now() } as Partial<UserProfile> as UserProfile,
+    { merge: true },
+  );
+};
+
 export const updateUserProfile = async (
   uid: string,
   input: UpdateProfileInput

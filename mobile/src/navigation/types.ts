@@ -4,6 +4,8 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
+  VerifyEmail: undefined;
+  ForgotPassword: undefined;
 };
 
 export type AppTabParamList = {

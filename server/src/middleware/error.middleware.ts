@@ -16,11 +16,12 @@ export const errorMiddleware = (
     return;
   }
 
-  const errWithCode = err as Error & { code?: string };
+  const errWithCode = err as Error & { code?: unknown };
+  const code = typeof errWithCode.code === 'string' ? errWithCode.code : '';
   if (
     err.name === 'FirebaseAuthError' ||
-    errWithCode.code?.startsWith('auth/') ||
-    errWithCode.code?.startsWith('app/')
+    code.startsWith('auth/') ||
+    code.startsWith('app/')
   ) {
     sendError(res, 'Authentication error', 401, 'FIREBASE_AUTH_ERROR');
     return;

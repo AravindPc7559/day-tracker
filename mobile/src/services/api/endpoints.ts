@@ -1,6 +1,7 @@
 export const ENDPOINTS = {
   AUTH: {
     PROFILE: '/auth/profile',
+    PUSH_TOKEN: '/auth/push-token',
   },
   AUDIO: {
     PROCESS: '/audio/process',

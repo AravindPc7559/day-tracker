@@ -7,6 +7,7 @@ export interface UserProfile {
   email: string;
   displayName: string;
   role: UserRole;
+  pushToken?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

@@ -43,6 +43,8 @@ Thumbs.db
 .firebase/
 firebase-debug.log
 firestore-debug.log
+mobile/google-services.json
+mobile/ios/GoogleService-Info.plist
 
 # Expo / React Native
 *.jks

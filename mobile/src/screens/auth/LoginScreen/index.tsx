@@ -108,7 +108,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                   <Input
                     label="Password"
                     placeholder="Enter your password"
-                    secureTextEntry
+                    showPasswordToggle
                     autoComplete="password"
                     value={value}
                     onChangeText={onChange}
@@ -117,6 +117,14 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
                   />
                 )}
               />
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ForgotPassword')}
+                style={styles.forgotRow}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.forgotText}>Forgot password?</Text>
+              </TouchableOpacity>
 
               {errors.root || google.error ? (
                 <View style={styles.errorBanner}>
@@ -226,6 +234,12 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: typography.size.sm,
     color: '#FCA5A5',
+  },
+  forgotRow: { alignSelf: 'flex-end', marginTop: -spacing.xs },
+  forgotText: {
+    fontSize: typography.size.sm,
+    color: colors.primary[400],
+    fontWeight: typography.weight.medium,
   },
   submitButton: { marginTop: spacing.md },
   dividerRow: {

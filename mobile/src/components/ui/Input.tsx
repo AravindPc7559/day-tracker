@@ -5,6 +5,7 @@ import {
   Text,
   Animated,
   StyleSheet,
+  TouchableOpacity,
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
@@ -16,6 +17,7 @@ interface InputProps extends TextInputProps {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   containerStyle?: ViewStyle;
+  showPasswordToggle?: boolean;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -27,10 +29,15 @@ export const Input: React.FC<InputProps> = ({
   style,
   onFocus,
   onBlur,
+  showPasswordToggle,
+  secureTextEntry,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const focusAnim = useRef(new Animated.Value(0)).current;
+
+  const isSecure = showPasswordToggle ? !passwordVisible : secureTextEntry;
 
   const handleFocus = (e: Parameters<NonNullable<TextInputProps['onFocus']>>[0]) => {
     setIsFocused(true);
@@ -73,9 +80,20 @@ export const Input: React.FC<InputProps> = ({
           placeholderTextColor={colors.neutral[400]}
           selectionColor={colors.primary[500]}
           keyboardAppearance="dark"
+          secureTextEntry={isSecure}
           {...props}
         />
-        {rightIcon ? <View style={styles.iconRight}>{rightIcon}</View> : null}
+        {showPasswordToggle ? (
+          <TouchableOpacity
+            style={styles.iconRight}
+            onPress={() => setPasswordVisible((v) => !v)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.eyeIcon}>{passwordVisible ? '👁️' : '🙈'}</Text>
+          </TouchableOpacity>
+        ) : rightIcon ? (
+          <View style={styles.iconRight}>{rightIcon}</View>
+        ) : null}
       </Animated.View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
@@ -118,6 +136,7 @@ const styles = StyleSheet.create({
   },
   iconLeft: { paddingLeft: spacing.md },
   iconRight: { paddingRight: spacing.md },
+  eyeIcon: { fontSize: 18 },
   errorText: {
     marginTop: spacing.xs,
     fontSize: typography.size.xs,

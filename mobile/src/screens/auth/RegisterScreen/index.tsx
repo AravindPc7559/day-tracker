@@ -14,7 +14,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Input } from '@/components/ui';
-import { registerWithEmail, setFirebaseDisplayName } from '@/services/firebase/auth.service';
+import { registerWithEmail, setFirebaseDisplayName, sendEmailVerification } from '@/services/firebase/auth.service';
 import { useCreateProfile } from '@/features/auth/auth.api';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useGoogleAuth } from '@/hooks/useGoogleAuth';
@@ -62,6 +62,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     try {
       const firebaseUser = await registerWithEmail(values.email, values.password);
       await setFirebaseDisplayName(firebaseUser, values.displayName);
+      await sendEmailVerification(firebaseUser);
       const profile = await createProfile({ displayName: values.displayName });
       setUserProfile(profile);
     } catch (err: unknown) {
@@ -120,7 +121,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 control={control}
                 name="password"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <Input label="Password" placeholder="Min. 6 characters" secureTextEntry
+                  <Input label="Password" placeholder="Min. 6 characters" showPasswordToggle
                     autoComplete="new-password" value={value} onChangeText={onChange}
                     onBlur={onBlur} error={errors.password?.message} />
                 )}
@@ -129,7 +130,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
                 control={control}
                 name="confirmPassword"
                 render={({ field: { onChange, onBlur, value } }) => (
-                  <Input label="Confirm Password" placeholder="Repeat your password" secureTextEntry
+                  <Input label="Confirm Password" placeholder="Repeat your password" showPasswordToggle
                     autoComplete="new-password" value={value} onChangeText={onChange}
                     onBlur={onBlur} error={errors.confirmPassword?.message} />
                 )}
