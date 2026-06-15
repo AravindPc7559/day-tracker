@@ -19,6 +19,7 @@ interface AuthState {
   setUserProfile: (profile: UserProfile | null) => void;
   setEmailVerified: (verified: boolean) => void;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   initialize: () => () => void;
 }
 
@@ -44,6 +45,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setEmailVerified: (emailVerified) => set({ emailVerified }),
 
   logout: async () => {
+    await signOut();
+    await clearToken();
+    set({ user: null, userProfile: null, token: null, isAuthenticated: false, emailVerified: false });
+  },
+
+  deleteAccount: async () => {
+    await apiClient.delete(ENDPOINTS.AUTH.DELETE_ACCOUNT);
     await signOut();
     await clearToken();
     set({ user: null, userProfile: null, token: null, isAuthenticated: false, emailVerified: false });

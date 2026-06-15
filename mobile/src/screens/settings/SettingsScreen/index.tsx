@@ -5,11 +5,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Linking,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { colors, spacing, typography, borderRadius } from '@/theme';
+import { PRIVACY_POLICY_URL } from '@/constants/urls';
 
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
@@ -76,8 +78,9 @@ const Avatar: React.FC<{ name: string }> = ({ name }) => {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 const SettingsScreen: React.FC = () => {
-  const { userProfile, user, logout } = useAuthStore();
+  const { userProfile, user, logout, deleteAccount } = useAuthStore();
   const [signingOut, setSigningOut] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const displayName = userProfile?.displayName ?? user?.displayName ?? 'User';
   const email = userProfile?.email ?? user?.email ?? '';
@@ -97,6 +100,42 @@ const SettingsScreen: React.FC = () => {
           onPress: async () => {
             setSigningOut(true);
             await logout();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account and all your data. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete My Account',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Are you absolutely sure?',
+              'All your logs, expenses, and progress will be deleted forever.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Yes, Delete Everything',
+                  style: 'destructive',
+                  onPress: async () => {
+                    setDeletingAccount(true);
+                    try {
+                      await deleteAccount();
+                    } catch {
+                      setDeletingAccount(false);
+                      Alert.alert('Error', 'Failed to delete account. Please try again.');
+                    }
+                  },
+                },
+              ]
+            );
           },
         },
       ]
@@ -170,6 +209,12 @@ const SettingsScreen: React.FC = () => {
             icon="🤖"
             label="Powered by"
             value="Whisper + GPT-4o"
+            isLast={false}
+          />
+          <Row
+            icon="🔒"
+            label="Privacy Policy"
+            onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}
             isLast={true}
           />
         </Section>
@@ -180,6 +225,13 @@ const SettingsScreen: React.FC = () => {
             icon="🚪"
             label={signingOut ? 'Signing out…' : 'Sign Out'}
             onPress={signingOut ? undefined : handleSignOut}
+            isLast={false}
+            destructive
+          />
+          <Row
+            icon="🗑️"
+            label={deletingAccount ? 'Deleting account…' : 'Delete Account'}
+            onPress={deletingAccount ? undefined : handleDeleteAccount}
             isLast={true}
             destructive
           />

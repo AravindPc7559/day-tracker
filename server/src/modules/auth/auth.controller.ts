@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { sendSuccess } from '../../utils/response';
-import { getUserProfile, createUserProfile, updateUserProfile, savePushToken } from './auth.service';
+import { getUserProfile, createUserProfile, updateUserProfile, savePushToken, deleteAccount } from './auth.service';
 import type { CreateProfileInput, UpdateProfileInput, SavePushTokenInput } from './auth.schema';
 
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {
@@ -25,4 +25,9 @@ export const savePushTokenController = asyncHandler(async (req: Request, res: Re
   const { token } = req.validatedBody as SavePushTokenInput;
   await savePushToken(req.user!.uid, token);
   sendSuccess(res, null, 'Push token saved');
+});
+
+export const deleteAccountController = asyncHandler(async (req: Request, res: Response) => {
+  await deleteAccount(req.user!.uid);
+  sendSuccess(res, null, 'Account deleted', 204);
 });

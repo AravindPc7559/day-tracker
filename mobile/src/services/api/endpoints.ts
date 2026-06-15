@@ -2,6 +2,7 @@ export const ENDPOINTS = {
   AUTH: {
     PROFILE: '/auth/profile',
     PUSH_TOKEN: '/auth/push-token',
+    DELETE_ACCOUNT: '/auth/account',
   },
   AUDIO: {
     PROCESS: '/audio/process',

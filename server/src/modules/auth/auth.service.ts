@@ -1,8 +1,8 @@
 import type { FirestoreDataConverter, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { Timestamp } from 'firebase-admin/firestore';
-import { db } from '../../config/firebase';
+import { db, adminAuth } from '../../config/firebase';
 import { COLLECTIONS } from '../../config/constants';
-import { NotFoundError } from '../../utils/errors';
+import { NotFoundError, FirebaseError } from '../../utils/errors';
 import type { UserProfile } from './auth.types';
 import type { CreateProfileInput, UpdateProfileInput } from './auth.schema';
 
@@ -61,4 +61,18 @@ export const updateUserProfile = async (
   await docRef.update(updates);
   const updated = await docRef.get();
   return updated.data()!;
+};
+
+
+export const deleteAccount = async (uid: string): Promise<void> => {
+  try {
+    // Delete Auth user first — if this fails, no data has been touched yet (safe to retry)
+    await adminAuth.deleteUser(uid);
+
+    // Recursively delete all Firestore data under the user document
+    // recursiveDelete handles all subcollections automatically, including any added in future
+    await db.recursiveDelete(db.collection(COLLECTIONS.USERS).doc(uid));
+  } catch (err) {
+    throw new FirebaseError(`Failed to delete account: ${String(err)}`);
+  }
 };
