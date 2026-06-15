@@ -17,6 +17,7 @@ module.exports = function (api) {
             '@/utils': './src/utils',
             '@/types': './src/types',
             '@/navigation': './src/navigation',
+            '@/constants': './src/constants',
           },
           extensions: ['.ios.js', '.android.js', '.js', '.jsx', '.ts', '.tsx', '.json'],
         },
