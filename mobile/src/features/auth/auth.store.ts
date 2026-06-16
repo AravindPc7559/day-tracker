@@ -68,7 +68,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           const token = await user.getIdToken();
           await storeToken(token);
 
-          const { data } = await apiClient.get<ApiResponse<UserProfile>>(ENDPOINTS.AUTH.PROFILE);
+          const { data } = await apiClient.get<ApiResponse<UserProfile | null>>(ENDPOINTS.AUTH.PROFILE);
           set({
             user,
             token,
@@ -81,8 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
           if (isNewSignIn) registerPushToken();
         } catch {
-          // Profile may not exist yet (new registration flow) — preserve any profile
-          // already set (e.g. by the registration screen) to avoid a race condition
+          // Network failure or server error — preserve any profile already in state
           const token = await user.getIdToken().catch(() => null);
           set((state) => ({
             user,

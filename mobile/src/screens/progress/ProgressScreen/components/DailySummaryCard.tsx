@@ -267,7 +267,7 @@ export const DailySummaryCard: React.FC<DailySummaryCardProps> = ({
   // Build non-meal groups
   const expenseRows = EXPENSE_KEYS
     .filter((k) => summary[k] !== undefined)
-    .map((k) => ({ key: k, label: EXPENSE_LABELS[k], value: `₹${summary[k]}`, rawValue: summary[k] as string | number }));
+    .map((k) => ({ key: k as string | null, label: EXPENSE_LABELS[k], value: `₹${summary[k]}`, rawValue: summary[k] as string | number }));
   const computedTotal = EXPENSE_KEYS.reduce((sum, k) => {
     const v = summary[k];
     return sum + (typeof v === 'number' ? v : 0);

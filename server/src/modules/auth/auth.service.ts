@@ -15,10 +15,10 @@ const userConverter: FirestoreDataConverter<UserProfile> = {
 const usersCollection = () =>
   db.collection(COLLECTIONS.USERS).withConverter(userConverter);
 
-export const getUserProfile = async (uid: string): Promise<UserProfile> => {
+export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
   const snapshot = await usersCollection().doc(uid).get();
   if (!snapshot.exists) {
-    throw new NotFoundError('User profile not found');
+    return null;
   }
   return snapshot.data()!;
 };
