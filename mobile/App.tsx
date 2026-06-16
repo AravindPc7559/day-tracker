@@ -3,9 +3,12 @@
 import './src/services/notifications/notification-handler';
 
 import React, { useEffect } from 'react';
+import { View, StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { setupLocalNotifications } from './src/services/notifications/local-notifications.service';
+import { OfflineBanner } from './src/components/shared/OfflineBanner';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,14 +18,21 @@ const queryClient = new QueryClient({
 
 export default function App() {
   useEffect(() => {
-    // Request permission and schedule daily reminders on every launch.
-    // The service handles idempotency and permission-denial tracking internally.
     setupLocalNotifications();
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <RootNavigator />
-    </QueryClientProvider>
+    <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
+        <View style={styles.root}>
+          <OfflineBanner />
+          <RootNavigator />
+        </View>
+      </QueryClientProvider>
+    </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

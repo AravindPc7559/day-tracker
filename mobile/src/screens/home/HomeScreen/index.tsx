@@ -22,6 +22,7 @@ import { StreakCard } from './components/StreakCard';
 import { RecordingFace } from '@/components/RecordingFace/RecordingFace';
 import type { FaceState } from '@/components/RecordingFace/RecordingFace';
 import { colors, spacing, typography, borderRadius } from '@/theme';
+import { extractErrorMessage } from '@/utils/error';
 import type { ProcessAudioResponse } from '@/features/audio/audio.types';
 
 const HomeScreen: React.FC = () => {
@@ -108,11 +109,7 @@ const HomeScreen: React.FC = () => {
         setProcessedData(result);
         setShowConfirmation(true);
       } catch (err: unknown) {
-        const axiosErr = err as { response?: { data?: { message?: string } } };
-        const msg =
-          axiosErr?.response?.data?.message ??
-          (err instanceof Error ? err.message : 'Something went wrong');
-        setApiErrorMsg(msg);
+        setApiErrorMsg(extractErrorMessage(err));
       }
     }
   }, [recordingState, startRecording, stopRecording, reset, processAudioMutation]);
@@ -129,11 +126,7 @@ const HomeScreen: React.FC = () => {
       setProcessedData(result);
       setShowConfirmation(true);
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      const msg =
-        axiosErr?.response?.data?.message ??
-        (err instanceof Error ? err.message : 'Something went wrong');
-      Alert.alert('Error', msg);
+      Alert.alert('Error', extractErrorMessage(err));
     }
   }, [processTextMutation]);
 
@@ -160,11 +153,7 @@ const HomeScreen: React.FC = () => {
       setShowConfirmation(true);
     } catch (err: unknown) {
       setCapturedImageUri(null);
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      const msg =
-        axiosErr?.response?.data?.message ??
-        (err instanceof Error ? err.message : 'Something went wrong');
-      Alert.alert('Error', msg);
+      Alert.alert('Error', extractErrorMessage(err));
     }
   }, [openCamera, processImageMutation]);
 
