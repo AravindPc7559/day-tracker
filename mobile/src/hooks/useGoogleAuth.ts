@@ -24,7 +24,6 @@ export const useGoogleAuth = (): UseGoogleAuthReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const redirectUri = makeRedirectUri();
-  console.log('[GoogleAuth] redirectUri:', redirectUri);
 
   const [request, response, promptAsync] = useAuthRequest(
     {
