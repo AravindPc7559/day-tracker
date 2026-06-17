@@ -14,7 +14,7 @@ build/
 .expo-shared/
 
 # Logs
-logs/
+/server/logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -45,6 +45,7 @@ firebase-debug.log
 firestore-debug.log
 mobile/google-services.json
 mobile/ios/GoogleService-Info.plist
+mobile/play-store-key.json
 
 # Expo / React Native
 *.jks

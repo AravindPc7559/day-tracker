@@ -10,10 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useGetDailyLogs, useUpdateCategoryField } from '@/features/logs/logs.api';
+import { useGetDailyLogs, useUpdateCategoryField, useDeleteEntry } from '@/features/logs/logs.api';
 import { DailySummaryCard, NUMERIC_KEYS, CATEGORY_LABELS } from './components/DailySummaryCard';
 import { EntryList } from './components/EntryList';
 import { EditFieldModal } from './components/EditFieldModal';
+import CalendarModal from './components/CalendarModal';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 
 const toDateStr = (d: Date) => {
@@ -37,15 +38,18 @@ interface EditingField {
 const ProgressScreen: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(toDateStr(new Date()));
   const [editingField, setEditingField] = useState<EditingField | null>(null);
+  const [calendarVisible, setCalendarVisible] = useState(false);
 
   const {
     data: dailyData,
     isLoading: dailyLoading,
     isFetching: dailyFetching,
+    isError: dailyError,
     refetch: refetchDaily,
   } = useGetDailyLogs(selectedDate);
 
   const updateFieldMutation = useUpdateCategoryField(selectedDate);
+  const deleteEntryMutation = useDeleteEntry(selectedDate);
 
   const goToPrevDay = () => {
     const d = new Date(selectedDate + 'T00:00:00');
@@ -86,6 +90,14 @@ const ProgressScreen: React.FC = () => {
     }
   };
 
+  const handleDeleteEntry = async (entryId: string) => {
+    try {
+      await deleteEntryMutation.mutateAsync(entryId);
+    } catch {
+      Alert.alert('Error', 'Failed to delete entry. Please try again.');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -108,10 +120,10 @@ const ProgressScreen: React.FC = () => {
           <TouchableOpacity style={styles.arrowButton} onPress={goToPrevDay}>
             <Text style={styles.arrowText}>‹</Text>
           </TouchableOpacity>
-          <View style={styles.dateCenter}>
+          <TouchableOpacity style={styles.dateCenter} onPress={() => setCalendarVisible(true)} activeOpacity={0.7}>
             <Text style={styles.dateText}>{formatDisplayDate(selectedDate)}</Text>
             {isToday && <View style={styles.todayBadge}><Text style={styles.todayText}>Today</Text></View>}
-          </View>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.arrowButton, isToday && styles.arrowDisabled]}
             onPress={goToNextDay}
@@ -125,14 +137,31 @@ const ProgressScreen: React.FC = () => {
           <View style={styles.loadingContainer}>
             <ActivityIndicator color={colors.primary[400]} />
           </View>
+        ) : dailyError ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.errorText}>Something went wrong.</Text>
+            <TouchableOpacity onPress={() => refetchDaily()} style={styles.retryButton}>
+              <Text style={styles.retryText}>Tap to retry</Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <DailySummaryCard summary={dailyData?.summary ?? {}} isToday={isToday} onEdit={handleEdit} />
         )}
 
-        {!dailyLoading && dailyData?.entries ? (
-          <EntryList entries={dailyData.entries} />
+        {!dailyLoading && !dailyError && dailyData?.entries ? (
+          <EntryList
+            entries={dailyData.entries}
+            onDelete={handleDeleteEntry}
+          />
         ) : null}
       </ScrollView>
+
+      <CalendarModal
+        visible={calendarVisible}
+        selectedDate={selectedDate}
+        onSelectDate={setSelectedDate}
+        onDismiss={() => setCalendarVisible(false)}
+      />
 
       <EditFieldModal
         visible={editingField !== null}
@@ -231,5 +260,22 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: spacing.sm,
+  },
+  errorText: {
+    fontSize: typography.size.sm,
+    color: colors.neutral[400],
+  },
+  retryButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.primary[700],
+  },
+  retryText: {
+    fontSize: typography.size.sm,
+    color: colors.primary[400],
+    fontWeight: typography.weight.medium,
   },
 });

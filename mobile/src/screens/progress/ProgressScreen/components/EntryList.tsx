@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { colors, spacing, typography, borderRadius } from '@/theme';
 import type { LogEntry } from '@/features/logs/logs.types';
 
 interface EntryListProps {
   entries: LogEntry[];
+  onDelete?: (entryId: string) => void;
 }
 
 const formatTime = (iso: string) => {
@@ -12,8 +13,23 @@ const formatTime = (iso: string) => {
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 };
 
-export const EntryList: React.FC<EntryListProps> = ({ entries }) => {
+export const EntryList: React.FC<EntryListProps> = ({ entries, onDelete }) => {
   if (entries.length === 0) return null;
+
+  const handleDelete = (entry: LogEntry) => {
+    Alert.alert(
+      'Delete Entry',
+      'Remove this entry? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => onDelete?.(entry.id),
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -23,6 +39,15 @@ export const EntryList: React.FC<EntryListProps> = ({ entries }) => {
           <View style={styles.entryHeader}>
             <View style={styles.entryDot} />
             <Text style={styles.entryTime}>{formatTime(entry.createdAt)}</Text>
+            {onDelete && (
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDelete(entry)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={styles.deleteText}>Delete</Text>
+              </TouchableOpacity>
+            )}
           </View>
           <Text style={styles.entryText}>"{entry.transcription}"</Text>
           <View style={styles.tags}>
@@ -71,6 +96,14 @@ const styles = StyleSheet.create({
   entryTime: {
     fontSize: typography.size.xs,
     color: colors.neutral[400],
+    fontWeight: typography.weight.medium,
+  },
+  deleteButton: {
+    marginLeft: 'auto',
+  },
+  deleteText: {
+    fontSize: typography.size.xs,
+    color: colors.error,
     fontWeight: typography.weight.medium,
   },
   entryText: {

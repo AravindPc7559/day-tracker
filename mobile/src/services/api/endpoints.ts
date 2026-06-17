@@ -21,5 +21,7 @@ export const ENDPOINTS = {
     WEEKLY_SUMMARY: '/logs/weekly-summary',
     MONTHLY_SUMMARY: '/logs/monthly-summary',
     YEARLY_SUMMARY: '/logs/yearly-summary',
+    CALENDAR: (month: string) => `/logs/calendar/${month}`,
+    DELETE_ENTRY: (date: string, entryId: string) => `/logs/${date}/entries/${entryId}`,
   },
 } as const;
