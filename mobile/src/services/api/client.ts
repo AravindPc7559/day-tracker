@@ -2,7 +2,7 @@ import axios from 'axios';
 import { auth } from '@/services/firebase/firebase.config';
 
 export const apiClient = axios.create({
-  baseURL: "http://192.168.1.35:3000/api",
+  baseURL: process.env.EXPO_PUBLIC_API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
