@@ -10,6 +10,7 @@ const envSchema = z.object({
   FIREBASE_CLIENT_EMAIL: z.string().email(),
   FIREBASE_PRIVATE_KEY: z.string().min(1),
   OPENAI_API_KEY: z.string().min(1),
+  REVENUECAT_WEBHOOK_SECRET: z.string().min(1),
 });
 
 const parsed = envSchema.safeParse(process.env);

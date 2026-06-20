@@ -7,8 +7,10 @@ import audioRoutes from './modules/audio/audio.routes';
 import imageRoutes from './modules/image/image.routes';
 import logsRoutes from './modules/logs/logs.routes';
 import streakRoutes from './modules/streak/streak.routes';
+import subscriptionRoutes from './modules/subscription/subscription.routes';
 import { errorMiddleware } from './middleware/error.middleware';
 import { authMiddleware } from './middleware/auth.middleware';
+import { subscriptionMiddleware } from './middleware/subscription.middleware';
 import { sendError } from './utils/response';
 
 const app = express();
@@ -36,10 +38,11 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
-app.use('/api/audio', authMiddleware, makeOpenAiLimiter(), audioRoutes);
-app.use('/api/image', authMiddleware, makeOpenAiLimiter(), imageRoutes);
+app.use('/api/audio', authMiddleware, subscriptionMiddleware, makeOpenAiLimiter(), audioRoutes);
+app.use('/api/image', authMiddleware, subscriptionMiddleware, makeOpenAiLimiter(), imageRoutes);
 app.use('/api/logs', logsRoutes);
 app.use('/api/streak', streakRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 app.use(errorMiddleware);
 

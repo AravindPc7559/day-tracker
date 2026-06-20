@@ -12,7 +12,7 @@ const userConverter: FirestoreDataConverter<UserProfile> = {
     ({ uid: snapshot.id, ...snapshot.data() } as UserProfile),
 };
 
-const usersCollection = () =>
+export const usersCollection = () =>
   db.collection(COLLECTIONS.USERS).withConverter(userConverter);
 
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {

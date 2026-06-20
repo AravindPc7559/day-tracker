@@ -33,3 +33,9 @@ export class FirebaseError extends AppError {
     super(message, 500, 'FIREBASE_ERROR');
   }
 }
+
+export class PaymentRequiredError extends AppError {
+  constructor(message = 'An active subscription is required') {
+    super(message, 402, 'PAYMENT_REQUIRED');
+  }
+}
