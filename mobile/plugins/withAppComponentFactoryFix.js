@@ -10,6 +10,7 @@ module.exports = function withAppComponentFactoryFix(config) {
     const application = manifest.application?.[0];
     if (application) {
       application.$['tools:replace'] = 'android:appComponentFactory';
+      application.$['android:appComponentFactory'] = 'androidx.core.app.CoreComponentFactory';
     }
 
     return config;
