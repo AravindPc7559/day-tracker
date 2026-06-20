@@ -50,7 +50,8 @@
           "color": "#2563EB",
           "defaultChannel": "default"
         }
-      ]
+      ],
+      "./plugins/withAppComponentFactoryFix"
     ],
     "extra": {
       "eas": {
