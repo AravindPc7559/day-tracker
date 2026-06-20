@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { setupLocalNotifications } from './src/services/notifications/local-notifications.service';
+import { configureRevenueCat } from './src/services/subscription/revenuecat.config';
 import { OfflineBanner } from './src/components/shared/OfflineBanner';
 
 const queryClient = new QueryClient({
@@ -18,6 +19,9 @@ const queryClient = new QueryClient({
 
 export default function App() {
   useEffect(() => {
+    // TODO: re-enable once a production RevenueCat key replaces the test_ key —
+    // RevenueCat's native SDK shows a full-screen test-key warning that blocks the app.
+    // configureRevenueCat();
     setupLocalNotifications();
   }, []);
 
