@@ -51,7 +51,8 @@
           "defaultChannel": "default"
         }
       ],
-      "./plugins/withAppComponentFactoryFix"
+      "./plugins/withAppComponentFactoryFix",
+      "./plugins/withExcludeLegacySupportLibrary"
     ],
     "extra": {
       "eas": {
