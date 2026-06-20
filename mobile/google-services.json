@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "957026090979",
+    "project_id": "tracker-app-17d12",
+    "storage_bucket": "tracker-app-17d12.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957026090979:android:dd6b47426418169c4c2ad6",
+        "android_client_info": {
+          "package_name": "com.aravind.captureday"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "957026090979-vdkhscv639e3uqmd237r1h3b7rbqu0lm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7v7ByherdhlTbVXwqGAOFVPNtZqLBjzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "957026090979-vdkhscv639e3uqmd237r1h3b7rbqu0lm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

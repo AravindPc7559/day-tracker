@@ -1,16 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useAuthRequest, makeRedirectUri } from 'expo-auth-session';
+import { useAuthRequest } from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { signInWithGoogle } from '@/services/firebase/auth.service';
 
 WebBrowser.maybeCompleteAuthSession();
-
-// Google's OAuth 2.0 endpoints
-const DISCOVERY = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-  revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-};
 
 interface UseGoogleAuthReturn {
   signIn: () => Promise<void>;
@@ -23,18 +16,11 @@ export const useGoogleAuth = (): UseGoogleAuthReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const redirectUri = makeRedirectUri();
-
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '',
-      redirectUri,
-      scopes: ['openid', 'profile', 'email'],
-      usePKCE: false,
-      extraParams: { access_type: 'online' },
-    },
-    DISCOVERY
-  );
+  const [request, response, promptAsync] = useAuthRequest({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  });
 
   useEffect(() => {
     if (!response) return;
