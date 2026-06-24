@@ -19,9 +19,7 @@ const queryClient = new QueryClient({
 
 export default function App() {
   useEffect(() => {
-    // TODO: re-enable once a production RevenueCat key replaces the test_ key —
-    // RevenueCat's native SDK shows a full-screen test-key warning that blocks the app.
-    // configureRevenueCat();
+    configureRevenueCat();
     setupLocalNotifications();
   }, []);
 
