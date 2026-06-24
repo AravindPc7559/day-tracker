@@ -13,6 +13,9 @@ export const ENDPOINTS = {
     PROCESS: '/image/process',
   },
   STREAK: '/streak',
+  SUBSCRIPTION: {
+    STATUS: '/subscription/status',
+  },
   LOGS: {
     DAILY: (date: string) => `/logs/${date}`,
     UPDATE_SUMMARY: (date: string) => `/logs/summary/${date}`,

@@ -208,26 +208,41 @@ export const updateDailySummary = async (
       .collection(COLLECTIONS.DAILY_SUMMARY)
       .doc(date);
 
-    await summaryRef.set(updates, { merge: true });
+    const month = date.slice(0, 7);
+    const monthlyRef = db
+      .collection(COLLECTIONS.USERS)
+      .doc(uid)
+      .collection(COLLECTIONS.MONTHLY_SUMMARY)
+      .doc(month);
 
-    // Sync expense totals in monthly_summary
-    const expenseDelta = Object.entries(updates)
-      .filter(([k, v]) => k.endsWith('_expense') && typeof v === 'number')
-      .reduce((sum, [, v]) => sum + (v as number), 0);
+    await db.runTransaction(async (tx) => {
+      const summarySnap = await tx.get(summaryRef);
+      const existing = summarySnap.data() ?? {};
 
-    if (expenseDelta > 0) {
-      const month = date.slice(0, 7);
-      const monthlyRef = db
-        .collection(COLLECTIONS.USERS)
-        .doc(uid)
-        .collection(COLLECTIONS.MONTHLY_SUMMARY)
-        .doc(month);
-      const monthlyUpdate: Record<string, unknown> = {};
-      for (const [k, v] of Object.entries(updates)) {
-        if (k.endsWith('_expense') && typeof v === 'number') monthlyUpdate[k] = v;
+      // Sync expense totals in monthly_summary by delta, not absolute value —
+      // monthly_summary accumulates across many days, so each edit must add/subtract
+      // only the difference from the previous value (mirrors deleteEntry's pattern).
+      const monthlyUpdates: Record<string, unknown> = {};
+      let totalExpenseDelta = 0;
+      for (const [key, value] of Object.entries(updates)) {
+        if (key.endsWith('_expense') && typeof value === 'number') {
+          const oldNum = typeof existing[key] === 'number' ? (existing[key] as number) : 0;
+          const delta = value - oldNum;
+          if (delta !== 0) {
+            totalExpenseDelta += delta;
+            monthlyUpdates[key] = FieldValue.increment(delta);
+          }
+        }
       }
-      await monthlyRef.set(monthlyUpdate, { merge: true });
-    }
+      if (totalExpenseDelta !== 0) {
+        monthlyUpdates['total_expense'] = FieldValue.increment(totalExpenseDelta);
+      }
+
+      tx.set(summaryRef, updates, { merge: true });
+      if (Object.keys(monthlyUpdates).length > 0) {
+        tx.set(monthlyRef, monthlyUpdates, { merge: true });
+      }
+    });
   } catch (err) {
     throw new FirebaseError(`Failed to update daily summary: ${String(err)}`);
   }
@@ -321,11 +336,12 @@ export const getWeeklySummary = async (uid: string): Promise<WeeklySummaryEntry[
 
 export const getMonthlySummary = async (uid: string): Promise<WeeklySummaryEntry[]> => {
   const today = new Date();
-  const daysInMonth = Array.from({ length: 30 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - (29 - i));
-    return toLocalDateStr(d);
-  });
+  // Calendar month to date (1st through today), not a rolling 30-day window —
+  // matches the "Month Total" label and the month buckets getYearlySummary expects.
+  const daysInMonth = Array.from(
+    { length: today.getDate() },
+    (_, i) => toLocalDateStr(new Date(today.getFullYear(), today.getMonth(), i + 1))
+  );
 
   try {
     const snaps = await Promise.all(

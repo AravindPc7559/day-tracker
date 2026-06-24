@@ -58,12 +58,18 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       defaultValues: { displayName: '', email: '', password: '', confirmPassword: '' },
     });
 
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: !isSubmitting });
+  }, [isSubmitting, navigation]);
+
   const onSubmit = async (values: RegisterPayload) => {
     try {
       const firebaseUser = await registerWithEmail(values.email, values.password);
-      await setFirebaseDisplayName(firebaseUser, values.displayName);
-      await sendEmailVerification(firebaseUser);
-      const profile = await createProfile({ displayName: values.displayName });
+      const [, profile] = await Promise.all([
+        setFirebaseDisplayName(firebaseUser, values.displayName),
+        createProfile({ displayName: values.displayName }),
+      ]);
+      sendEmailVerification(firebaseUser).catch(() => {});
       setUserProfile(profile);
     } catch (err: unknown) {
       const message =
@@ -78,8 +84,12 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.bg}>
         <LinearGradient colors={gradients.brandSubtle} style={styles.topSection}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←  Back</Text>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            disabled={isSubmitting}
+            style={styles.backButton}
+          >
+            <Text style={[styles.backIcon, isSubmitting && styles.navDisabled]}>←  Back</Text>
           </TouchableOpacity>
           <AppLogo size={60} />
           <Text style={styles.headerTitle}>Create account</Text>
@@ -143,7 +153,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               ) : null}
 
               <Button label="Create Account" onPress={handleSubmit(onSubmit)}
-                isLoading={isSubmitting} style={styles.submitButton} />
+                disabled={google.isLoading} isLoading={isSubmitting} style={styles.submitButton} />
 
               <View style={styles.dividerRow}>
                 <View style={styles.dividerLine} />
@@ -152,9 +162,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
               </View>
 
               <TouchableOpacity
-                style={styles.googleButton}
+                style={[styles.googleButton, isSubmitting && styles.navDisabled]}
                 onPress={google.signIn}
-                disabled={google.isLoading}
+                disabled={google.isLoading || isSubmitting}
                 activeOpacity={0.8}
               >
                 {google.isLoading ? (
@@ -170,8 +180,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.footerLink}>Sign in</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')} disabled={isSubmitting}>
+                <Text style={[styles.footerLink, isSubmitting && styles.navDisabled]}>Sign in</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -192,6 +202,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   backButton: { marginBottom: spacing.xl },
+  navDisabled: { opacity: 0.4 },
   backIcon: {
     fontSize: typography.size.sm,
     color: 'rgba(255,255,255,0.6)',

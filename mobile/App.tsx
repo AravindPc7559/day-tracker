@@ -5,17 +5,12 @@ import './src/services/notifications/notification-handler';
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { setupLocalNotifications } from './src/services/notifications/local-notifications.service';
 import { configureRevenueCat } from './src/services/subscription/revenuecat.config';
+import { queryClient } from './src/services/api/queryClient';
 import { OfflineBanner } from './src/components/shared/OfflineBanner';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 1, staleTime: 5 * 60 * 1000 },
-  },
-});
 
 export default function App() {
   useEffect(() => {

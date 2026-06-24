@@ -50,6 +50,10 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       defaultValues: { email: '', password: '' },
     });
 
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: !isSubmitting });
+  }, [isSubmitting, navigation]);
+
   const onSubmit = async (values: LoginPayload) => {
     try {
       await signInWithEmail(values.email, values.password);
@@ -120,10 +124,11 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
               <TouchableOpacity
                 onPress={() => navigation.navigate('ForgotPassword')}
+                disabled={isSubmitting}
                 style={styles.forgotRow}
                 activeOpacity={0.7}
               >
-                <Text style={styles.forgotText}>Forgot password?</Text>
+                <Text style={[styles.forgotText, isSubmitting && styles.navDisabled]}>Forgot password?</Text>
               </TouchableOpacity>
 
               {errors.root || google.error ? (
@@ -135,6 +140,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               <Button
                 label="Sign In"
                 onPress={handleSubmit(onSubmit)}
+                disabled={google.isLoading}
                 isLoading={isSubmitting}
                 style={styles.submitButton}
               />
@@ -146,9 +152,9 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
               </View>
 
               <TouchableOpacity
-                style={styles.googleButton}
+                style={[styles.googleButton, isSubmitting && styles.navDisabled]}
                 onPress={google.signIn}
-                disabled={google.isLoading}
+                disabled={google.isLoading || isSubmitting}
                 activeOpacity={0.8}
               >
                 {google.isLoading ? (
@@ -164,8 +170,8 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.footerLink}>Sign up</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')} disabled={isSubmitting}>
+                <Text style={[styles.footerLink, isSubmitting && styles.navDisabled]}>Sign up</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -236,6 +242,7 @@ const styles = StyleSheet.create({
     color: '#FCA5A5',
   },
   forgotRow: { alignSelf: 'flex-end', marginTop: -spacing.xs },
+  navDisabled: { opacity: 0.4 },
   forgotText: {
     fontSize: typography.size.sm,
     color: colors.primary[400],

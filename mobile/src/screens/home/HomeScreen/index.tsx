@@ -26,8 +26,9 @@ import { extractErrorMessage } from '@/utils/error';
 import type { ProcessAudioResponse } from '@/features/audio/audio.types';
 
 const HomeScreen: React.FC = () => {
-  const { userProfile } = useAuthStore();
+  const { userProfile, user } = useAuthStore();
   const queryClient = useQueryClient();
+  const uid = user?.uid;
 
   const [showTextInput, setShowTextInput] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -172,16 +173,16 @@ const HomeScreen: React.FC = () => {
       setApiErrorMsg(null);
       setCapturedImageUri(null);
       reset();
-      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.daily(today) });
-      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weekly });
-      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weeklySummary });
-      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.monthlySummary });
-      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.yearlySummary });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.daily(uid, today) });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weekly(uid) });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.weeklySummary(uid) });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.monthlySummary(uid) });
+      queryClient.invalidateQueries({ queryKey: LOGS_QUERY_KEYS.yearlySummary(uid) });
       queryClient.invalidateQueries({ queryKey: STREAK_QUERY_KEY });
     } catch {
       Alert.alert('Error', 'Failed to save. Please try again.');
     }
-  }, [confirmSaveMutation, reset, queryClient, currentSource]);
+  }, [confirmSaveMutation, reset, queryClient, currentSource, uid]);
 
   const handleDiscard = useCallback(() => {
     setShowConfirmation(false);
